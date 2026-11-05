@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/card_dark"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚙️ CẤU HÌNH MÁY CHỦ SOC"
+        android:textColor="@color/primary_light"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Nhập đường link Cloudflare Tunnel hoặc địa chỉ IP LAN của máy chủ Ubuntu (Cổng 8888)."
+        android:textColor="@color/text_muted"
+        android:textSize="12sp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:boxBackgroundColor="#0B1120"
+        app:boxStrokeColor="@color/primary_blue"
+        app:hintTextColor="@color/primary_light">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDialogServerUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Địa chỉ máy chủ SOC"
+            android:textColor="@color/text_white"
+            android:textSize="13sp"
+            android:inputType="textUri" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btnDialogSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/primary_blue"
+        android:text="💾 LƯU &amp; TẢI LẠI DASHBOARD"
+        android:textColor="@color/text_white"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnDialogTestCall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/emergency_red"
+        android:text="📞 THỬ NGHIỆM CUỘC GỌI BÁO ĐỘNG"
+        android:textColor="@color/text_white"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnDialogBattery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/card_border"
+        android:text="⚡ CẤP QUYỀN CHẠY NGẦM 24/7 (PIN)"
+        android:textColor="@color/primary_light"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/btnDialogClose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:text="ĐÓNG"
+        android:textColor="@color/text_muted" />
+
+</LinearLayout>

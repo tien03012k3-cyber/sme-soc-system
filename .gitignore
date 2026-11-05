@@ -1,0 +1,23 @@
+# Build and temporary files
+*.exe
+*.o
+*.obj
+__pycache__/
+*.pyc
+*.pyo
+.idea/
+.vscode/
+
+# Android build artifacts
+.gradle/
+build/
+*/build/
+*/*/build/
+*.iml
+local.properties
+.cxx/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
