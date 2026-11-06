@@ -1027,7 +1027,7 @@ def _es_search(index, query):
 _last_seen_auth_time = {}
 
 def check_auth_logs():
-    global _last_seen_auth_time
+    global _last_seen_auth_time, BRUTE_FORCE_INCIDENT
     query = {
         "size": 50,
         "query": {
@@ -1071,12 +1071,23 @@ def check_auth_logs():
 
     for (u, ip), cnt in fail_counts.items():
         if cnt >= CONFIG["auth_fail_threshold"]:
+            clean_u = u.replace("$", "") if u else "tien0"
+            with _lock:
+                BRUTE_FORCE_INCIDENT["active"] = True
+                BRUTE_FORCE_INCIDENT["hostname"] = "NGUYENVANTIEN"
+                BRUTE_FORCE_INCIDENT["target_user"] = clean_u
+                BRUTE_FORCE_INCIDENT["attacker_ip"] = ip
+                BRUTE_FORCE_INCIDENT["fail_count"] = cnt
+                BRUTE_FORCE_INCIDENT["detected_at"] = _now_str()
+                BRUTE_FORCE_INCIDENT["status"] = "active"
+
             newest_ts = latest_ts_map.get((u, ip), "")
             last_seen = _last_seen_auth_time.get((u, ip), "")
 
             if newest_ts > last_seen:
                 _last_seen_auth_time[(u, ip)] = newest_ts
                 add_incident("white", "BRUTE-FORCE MẬT KHẨU", f"Tài khoản: {u} (Sai {cnt} lần / 10 phút)", f"Máy trạm IP: {ip} | Event ID: 4625")
+
                 log_alert_to_es(f"Tấn công Brute-force ({cnt} lần)", u, ip, "MALICIOUS")
                 
                 # Chỉ gọi điện khi số lần gõ sai >= 5 (Mức đỏ báo động nghiêm trọng)
@@ -3058,13 +3069,15 @@ def dashboard_html():
           data.incidents.forEach(inc => {
             const isRed = inc.color === 'red';
             const badgeBg = isRed ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800';
+            const isBrute = (inc.type || '').includes('BRUTE-FORCE') || (inc.title || '').includes('BRUTE-FORCE');
+            const soarBtn = isBrute ? `<button onclick="switchTab('dashboard')" class="ml-2 px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] shadow transition inline-flex items-center gap-1">⚡ Xử lý SOAR ngay</button>` : '';
             const row = `
               <tr class="hover:bg-slate-800/30">
                 <td class="p-3 text-slate-400">${inc.time}</td>
                 <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeBg}">${isRed ? 'CRITICAL' : 'WARNING'}</span></td>
                 <td class="p-3 text-slate-300 font-semibold">${inc.type || 'SECURITY'}</td>
                 <td class="p-3 text-white font-bold">${inc.title}</td>
-                <td class="p-3 text-cyan-300">${inc.details || '-'}</td>
+                <td class="p-3 text-cyan-300 flex items-center justify-between"><span>${inc.details || '-'}</span>${soarBtn}</td>
               </tr>
             `;
             fullTable.innerHTML += row;
