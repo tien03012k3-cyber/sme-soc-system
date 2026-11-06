@@ -66,13 +66,16 @@ if ($res -and $res.status -eq "ok") {
 
 # 4. Danh sach cac thu muc trong yeu can canh chung thoi gian thuc
 $watchFolders = @(
-    [System.IO.Path]::Combine($env:USERPROFILE, "Downloads"),
+    [System.Environment]::GetFolderPath('Desktop'),
     [System.IO.Path]::Combine($env:USERPROFILE, "Desktop"),
+    [System.IO.Path]::Combine($env:USERPROFILE, "OneDrive\Desktop"),
+    [System.IO.Path]::Combine($env:USERPROFILE, "Downloads"),
+    [System.Environment]::GetFolderPath('MyDocuments'),
     [System.IO.Path]::Combine($env:USERPROFILE, "Documents"),
     $env:TEMP,
     "C:\Users\Public\Downloads",
     "C:\Users\Public\Desktop"
-)
+) | Select-Object -Unique
 
 Write-Host "`n[*] [RADAR TOAN DIEN] Dang canh chung dong thoi cac thu muc trong yeu:" -ForegroundColor Magenta
 foreach ($folder in $watchFolders) {
@@ -86,7 +89,6 @@ $seenFiles = @{}
 
 # Ham kiem tra va canh bao file chua CVE
 function Check-TargetFolders() {
-    # 1. Quet cac file hien co trong cac thu muc canh chung
     $currentPaths = @{}
     foreach ($folder in $watchFolders) {
         if (Test-Path $folder) {
@@ -94,45 +96,39 @@ function Check-TargetFolders() {
                 $fullPath = $_.FullName
                 $currentPaths[$fullPath] = $true
                 $fn = $_.Name
-                $ext = $_.Extension.ToLower()
 
-                # Neu file chua duoc bao cao
                 if (-not $seenFiles.ContainsKey($fullPath)) {
-                    if ($ext -in @(".exe", ".msi", ".zip", ".rar", ".7z")) {
-                        $cveApp = $null
-                        if ($fn -match "winrar.*?(6[._\-]?[0-2][0-2]|6\.22|6\.20|5\.)") {
-                            $cveApp = @{ name = "WinRAR (Tep tai ve: $fn)"; version = "6.22.0"; publisher = "win.rar GmbH" }
-                        } elseif ($fn -match "putty.*?(0\.[0-7][0-9]|0\.80)") {
-                            $cveApp = @{ name = "PuTTY (Tep tai ve: $fn)"; version = "0.80"; publisher = "Simon Tatham" }
-                        } elseif ($fn -match "7z.*?(1[0-9]|2[0-2])") {
-                            $cveApp = @{ name = "7-Zip (Tep tai ve: $fn)"; version = "22.01"; publisher = "Igor Pavlov" }
-                        } elseif ($fn -match "git.*?(2\.[0-3][0-9]|2\.4[0-5])") {
-                            $cveApp = @{ name = "Git (Tep tai ve: $fn)"; version = "2.44.0"; publisher = "The Git Development Community" }
-                        } elseif ($fn -match "npp|notepad.*?(8\.[0-5])") {
-                            $cveApp = @{ name = "Notepad++ (Tep tai ve: $fn)"; version = "8.5.6"; publisher = "Notepad++ Team" }
-                        }
+                    $cveApp = $null
+                    if ($fn -match "winrar.*?(6[._\-]?[0-2][0-2]|6\.22|6\.20|5\.)") {
+                        $cveApp = @{ name = "WinRAR (Tep tai ve: $fn)"; version = "6.22.0"; publisher = "win.rar GmbH" }
+                    } elseif ($fn -match "putty.*?(0\.[0-7][0-9]|0\.80)") {
+                        $cveApp = @{ name = "PuTTY (Tep tai ve: $fn)"; version = "0.80"; publisher = "Simon Tatham" }
+                    } elseif ($fn -match "7z.*?(1[0-9]|2[0-2])") {
+                        $cveApp = @{ name = "7-Zip (Tep tai ve: $fn)"; version = "22.01"; publisher = "Igor Pavlov" }
+                    } elseif ($fn -match "git.*?(2\.[0-3][0-9]|2\.4[0-5])") {
+                        $cveApp = @{ name = "Git (Tep tai ve: $fn)"; version = "2.44.0"; publisher = "The Git Development Community" }
+                    } elseif ($fn -match "npp|notepad.*?(8\.[0-5])") {
+                        $cveApp = @{ name = "Notepad++ (Tep tai ve: $fn)"; version = "8.5.6"; publisher = "Notepad++ Team" }
+                    }
 
-                        if ($cveApp) {
-                            $seenFiles[$fullPath] = $true
-                            Write-Host "`n[!] [RADAR CVE PHAT HIEN] Tep nguy hiem tai: $fullPath" -ForegroundColor Red
-                            Write-Host "    -> Ung dung: $($cveApp.name) (CVE HIGH/CRITICAL)" -ForegroundColor Red
-                            $payload = @{
-                                client_ip = "192.168.21.153"
-                                hostname = $env:COMPUTERNAME
-                                apps = @($cveApp)
-                            }
-                            $sendRes = Send-SocJson $CVE_URL $payload
-                            if ($sendRes) {
-                                Write-Host "    -> Da gui canh bao len SOC Dashboard va Telegram thanh cong!" -ForegroundColor Yellow
-                            }
+                    if ($cveApp) {
+                        $seenFiles[$fullPath] = $true
+                        Write-Host "`n[!] [RADAR CVE PHAT HIEN] Tep nguy hiem tai: $fullPath" -ForegroundColor Red
+                        Write-Host "    -> Ung dung: $($cveApp.name) (CVE HIGH/CRITICAL)" -ForegroundColor Red
+                        $payload = @{
+                            client_ip = "192.168.21.153"
+                            hostname = $env:COMPUTERNAME
+                            apps = @($cveApp)
                         }
+                        Send-SocJson $CVE_URL $payload | Out-Null
+                        Write-Host "    -> Da gui canh bao len SOC Dashboard va Telegram thanh cong!" -ForegroundColor Yellow
                     }
                 }
             }
         }
     }
 
-    # 2. Don dep bo nho seen: Neu file da bi xoa (do SOAR hoac user), xoa khoi seenFiles de phat hien tiep neu xuat hien lai
+    # Don dep bo nho seen: Neu file da bi xoa, xoa khoi seenFiles de phat hien tiep neu xuat hien lai
     $toRemove = @()
     foreach ($p in $seenFiles.Keys) {
         if (-not $currentPaths.ContainsKey($p)) {
@@ -171,37 +167,28 @@ while ($true) {
             # SOAR 2: Lenh tieu huy tep doc hai / cach ly tu xa
             if ($resp.cve_action -eq "delete_file" -and $resp.target_file) {
                 $targetFile = $resp.target_file
-                Write-Host "`n[!] [SOAR COMMAND] Nhan lenh tieu huy tep doc hai tu xa: $targetFile" -ForegroundColor Red
+                $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetFile)
+                Write-Host "`n[!] [SOAR COMMAND] Nhan lenh tieu huy tep doc hai tu xa: $targetFile (Base: $baseName)" -ForegroundColor Red
                 $deletedCount = 0
 
-                # Xoa trong cac thu muc canh chung
+                # Xoa trong cac thu muc canh chung (quet khong phan biet duoi file)
                 foreach ($folder in $watchFolders) {
                     if (Test-Path $folder) {
-                        $targetPath = [System.IO.Path]::Combine($folder, $targetFile)
-                        if (Test-Path $targetPath) {
-                            Remove-Item $targetPath -Force -ErrorAction SilentlyContinue
-                            Write-Host "[+] [SOAR THUC THI] DA TIEU HUY TEP: $targetPath" -ForegroundColor Green
-                            if ($seenFiles.ContainsKey($targetPath)) { $seenFiles.Remove($targetPath) }
+                        Get-ChildItem -Path $folder -File -ErrorAction SilentlyContinue | Where-Object {
+                            $_.Name -like "*$targetFile*" -or ($baseName -and $_.Name -like "*$baseName*")
+                        } | ForEach-Object {
+                            $delPath = $_.FullName
+                            Remove-Item $delPath -Force -ErrorAction SilentlyContinue
+                            Write-Host "[+] [SOAR THUC THI] DA TIEU HUY TEP: $delPath" -ForegroundColor Green
+                            if ($seenFiles.ContainsKey($delPath)) { $seenFiles.Remove($delPath) }
                             $deletedCount++
                         }
                     }
                 }
 
-                # Xoa ca trong D:\sharemay1 hoac C:\SOC_Agent neu co
-                foreach ($extra in @("C:\SOC_Agent", "D:\sharemay1", "Z:\sharemay1")) {
-                    if (Test-Path $extra) {
-                        $p = [System.IO.Path]::Combine($extra, $targetFile)
-                        if (Test-Path $p) {
-                            Remove-Item $p -Force -ErrorAction SilentlyContinue
-                            Write-Host "[+] [SOAR THUC THI] DA TIEU HUY TEP TAI: $p" -ForegroundColor Green
-                            $deletedCount++
-                        }
-                    }
-                }
-
-                # Neu van con sot, tim sau trong toan bo UserProfile de tieu huy
-                if ($deletedCount -eq 0) {
-                    Get-ChildItem -Path $env:USERPROFILE -Filter $targetFile -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+                # Tim va xoa toan bo trong UserProfile neu chua thay
+                if ($deletedCount -eq 0 -and $baseName) {
+                    Get-ChildItem -Path $env:USERPROFILE -Filter "*$baseName*" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
                         $delP = $_.FullName
                         Remove-Item $delP -Force -ErrorAction SilentlyContinue
                         Write-Host "[+] [SOAR THUC THI] DA TIEU HUY TEP: $delP" -ForegroundColor Green
