@@ -597,10 +597,10 @@ async def receive_windows_metrics(request: Request):
     cve_act = "none"
     cve_target = ""
     with _lock:
-        if CVE_REMEDIATION_COMMAND.get("action") == "delete_file":
+        cmd_ts = CVE_REMEDIATION_COMMAND.get("timestamp", 0)
+        if CVE_REMEDIATION_COMMAND.get("action") == "delete_file" and (time.time() - cmd_ts < 20):
             cve_act = "delete_file"
             cve_target = CVE_REMEDIATION_COMMAND.get("target_file", "")
-            CVE_REMEDIATION_COMMAND["action"] = "none"
 
     return {
         "tunnel_url": get_current_tunnel_url(),
@@ -766,6 +766,7 @@ async def handle_cve_remediate(req: Request):
         CVE_REMEDIATION_COMMAND = {
             "action": "delete_file",
             "target_file": target_file,
+            "timestamp": time.time(),
             "time": _now_str()
         }
         # Cập nhật danh sách loại bỏ lỗ hổng đã xóa
