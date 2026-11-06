@@ -11,6 +11,7 @@ Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+$global:isLockdownActive = $false
 $SOC_SERVER = "http://192.168.21.136:8888"
 $METRICS_URL = "$SOC_SERVER/api/windows_metrics"
 $CVE_URL = "$SOC_SERVER/api/cve/report"
@@ -154,6 +155,11 @@ Write-Host "`n[+] Agent dang chay: Canh chung toan bo Desktop/Downloads/Temp va 
 
 while ($true) {
     try {
+        # 0. Phong toa cuong che neu dang o che do Lockdown (khong cho phep bat ky ai mo Desktop)
+        if ($global:isLockdownActive) {
+            rundll32.exe user32.dll,LockWorkStation
+        }
+
         # 1. Kiem tra file CVE trong tat ca thu muc trong yeu
         Check-TargetFolders
 
@@ -235,12 +241,11 @@ while ($true) {
                 }
             }
 
-            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Khoa User)
+            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Phong toa User)
             if ($resp.brute_action -and $resp.brute_action -ne "none") {
                 $bAct = $resp.brute_action
                 $bIp = $resp.brute_target_ip
                 $bUser = $resp.brute_target_user
-                # Chuan hoa ten User thuc te (neu nhan NGUYENVANTIEN thi tu doi ve tien0)
                 if (-not $bUser -or $bUser -eq "NGUYENVANTIEN" -or $bUser -like "*$") {
                     $bUser = if ($env:USERNAME) { $env:USERNAME } else { "tien0" }
                 }
@@ -253,21 +258,29 @@ while ($true) {
                     Write-Host "[+] [SOAR THUC THI] DA CHAN IP $bIp TREN WINDOWS FIREWALL THANH CONG!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "lock_user") {
-                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh TAM KHOA TAI KHOAN: $bUser (MITRE M1036)" -ForegroundColor Red
-                    # 1. Vo hieu hoa tai khoan
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh PHONG TOA & TAM KHOA TAI KHOAN: $bUser (MITRE M1036)" -ForegroundColor Red
+                    
+                    # 1. Kich hoat che do phong toa man hinh (da vang lien tuc ra ngoai)
+                    $global:isLockdownActive = $true
+
+                    # 2. Vo hieu hoa tai khoan bang quyen Admin
                     net user "$bUser" /active:no >nul 2>nul
                     Disable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN: $bUser (Active: No)!" -ForegroundColor Green
+                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN $bUser (Account active: No)!" -ForegroundColor Green
                     
-                    # 2. Ngay lap tuc khoa man hinh (Lock Workstation) de tong co nguoi dung ra ngoai man hinh dang nhap
-                    Write-Host "[+] [SOAR THUC THI] DANG KHOA MAN HINH DE NGAN CHAN TRUY CAP..." -ForegroundColor Yellow
+                    # 3. Tong co nguoi dung ra ngoai man hinh dang nhap ngay lap tuc
                     rundll32.exe user32.dll,LockWorkStation
                 }
                 elseif ($bAct -eq "unlock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh MO KHOA TAI KHOAN: $bUser" -ForegroundColor Green
+                    
+                    # 1. Tat che do phong toa man hinh
+                    $global:isLockdownActive = $false
+
+                    # 2. Kich hoat lai tai khoan
                     net user "$bUser" /active:yes >nul 2>nul
                     Enable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG (Active: Yes)!" -ForegroundColor Green
+                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG (Account active: Yes)!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unblock_ip" -and $bIp) {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh BO CHAN IP FIREWALL: $bIp" -ForegroundColor Green
@@ -280,5 +293,6 @@ while ($true) {
     } catch {
         # Bo qua loi ngoai le de giu chu trinh lien tuc
     }
-    Start-Sleep -Seconds 3
+    $sleepSec = if ($global:isLockdownActive) { 1 } else { 3 }
+    Start-Sleep -Seconds $sleepSec
 }
