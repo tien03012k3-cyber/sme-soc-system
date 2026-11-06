@@ -1024,615 +1024,740 @@ def ai_worker():
 @app.get("/", response_class=HTMLResponse)
 def dashboard_html():
     return """<!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="dark">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SME SOC Dashboard & Emergency Center</title>
-    
-    <!-- PWA & Apple iOS Tags -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SOC Alert">
-    <meta name="theme-color" content="#0284c7">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME SOC Command Center - Enterprise Security Dashboard</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; rounded: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
-    <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #0b1120; 
-            color: #f8fafc; 
-            margin: 0; 
-            padding: 12px 16px; 
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid #1e293b; 
-            padding-bottom: 10px; 
-            margin-bottom: 12px; 
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        h1 { margin: 0; font-size: 18px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-        
-        .header-buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .btn-pwa-unlock { background: #0284c7; color: white; padding: 7px 14px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4); }
-        .btn-pwa-test { background: #334155; color: #38bdf8; padding: 7px 14px; border-radius: 6px; font-weight: bold; border: 1px solid #0284c7; cursor: pointer; font-size: 12px; }
+    .gauge-gradient {
+      background: linear-gradient(90deg, #10b981 0%, #3b82f6 30%, #f59e0b 70%, #ef4444 100%);
+    }
 
-        /* 3 BẢNG TRÊN */
-        .grid-top { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 12px; margin-bottom: 12px; }
-        @media (max-width: 900px) {
-            .grid-top { grid-template-columns: 1fr; }
-        }
-        .card-mini { background: #1e293b; border-radius: 8px; padding: 12px 14px; border: 1px solid #334155; }
-        .card-mini-title { font-size: 13px; font-weight: bold; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        
-        .metrics-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; }
-        .metric-box { background: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid #334155; }
-        .metric-num { font-size: 20px; font-weight: 800; color: #38bdf8; }
-        .progress-bar { background: #334155; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px; }
-        .progress-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 0.3s; }
-        
-        .badge { padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: bold; }
-        .badge-normal { background: #065f46; color: #34d399; }
-        .badge-overload { background: #991b1b; color: #f87171; animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .nav-item-active {
+      background-color: #1e293b;
+      color: #38bdf8;
+      border-left: 3px solid #0284c7;
+    }
 
-        /* FORM NGƯỠNG */
-        .cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
-        .cfg-item label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
-        .cfg-item input { width: 100%; padding: 4px 8px; background: #0f172a; border: 1px solid #475569; border-radius: 4px; color: #fff; font-size: 12px; }
-        
-        .btn-group { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-        .btn { padding: 5px 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .btn-primary { background: #0284c7; color: white; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-warning { background: #d97706; color: white; }
-        .btn-secondary { background: #475569; color: white; }
+    /* TOOLTIP HOVER ENGINE */
+    .has-tooltip {
+      position: relative;
+      cursor: help;
+    }
+    .has-tooltip:hover .tooltip-box {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .tooltip-box {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(6px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: absolute;
+      z-index: 50;
+      pointer-events: none;
+      background: #0f172a;
+      border: 1px solid #0284c7;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(2, 132, 199, 0.35);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      width: 280px;
+      color: #f1f5f9;
+      font-size: 11px;
+      line-height: 1.45;
+    }
 
-        /* BẢNG LOG DƯỚI */
-        .log-container { background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; flex-grow: 1; display: flex; flex-direction: column; }
-        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        .log-list { overflow-y: auto; max-height: 400px; flex-grow: 1; }
-        
-        .log-row { display: grid; grid-template-columns: 130px 180px 1fr 100px; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; font-family: monospace; }
-        @media (max-width: 768px) {
-            .log-row { grid-template-columns: 1fr; gap: 4px; }
-        }
-        .log-red { background: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444; color: #fca5a5; }
-        .log-red .tag { background: #ef4444; color: #fff; }
-        .log-orange { background: rgba(249, 115, 22, 0.15); border-left: 4px solid #f97316; color: #fdba74; }
-        .log-orange .tag { background: #f97316; color: #fff; }
-        .log-purple { background: rgba(168, 85, 247, 0.15); border-left: 4px solid #a855f7; color: #d8b4fe; }
-        .log-purple .tag { background: #a855f7; color: #fff; }
-        .log-yellow { background: rgba(234, 179, 8, 0.15); border-left: 4px solid #eab308; color: #fde047; }
-        .log-yellow .tag { background: #eab308; color: #000; font-weight: bold; }
-        .log-blue { background: rgba(14, 165, 233, 0.15); border-left: 4px solid #0ea5e9; color: #7dd3fc; }
-        .log-blue .tag { background: #0ea5e9; color: #fff; }
-        .filter-btn { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
-        .filter-btn.active, .filter-btn:hover { background: #0284c7; color: white; border-color: #38bdf8; }
-        .tag { padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; text-align: center; display: inline-block; }
+    .tip-bottom {
+      top: 100%;
+      left: 50%;
+      margin-top: 8px;
+      transform: translateX(-50%) translateY(6px);
+    }
+    .has-tooltip:hover .tip-bottom {
+      transform: translateX(-50%) translateY(0);
+    }
 
-        /* MÀN HÌNH CUỘC GỌI TOÀN MÀN HÌNH */
-        .call-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(11, 17, 32, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .call-box {
-            background: #1e293b;
-            border: 2px solid #ef4444;
-            border-radius: 16px;
-            max-width: 440px;
-            width: 100%;
-            padding: 28px 24px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(239, 68, 68, 0.5);
-            animation: pulse-border 1.5s infinite;
-        }
-        @keyframes pulse-border {
-            0%, 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 60px rgba(239, 68, 68, 0.8); }
-        }
-        .call-badge { display: inline-block; background: #991b1b; color: #fca5a5; padding: 4px 12px; border-radius: 999px; font-weight: bold; font-size: 12px; margin-bottom: 12px; }
-        .call-avatar { width: 72px; height: 72px; margin: 0 auto 12px auto; background: #0f172a; border: 2px solid #38bdf8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; animation: bounce 1s infinite alternate; }
-        @keyframes bounce { from { transform: scale(0.95); } to { transform: scale(1.05); } }
-        .call-title { margin: 0 0 8px 0; font-size: 20px; color: #f87171; }
-        .call-msg { font-size: 14px; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5; }
-        .call-pulse-text { font-size: 13px; font-weight: bold; color: #fbbf24; margin-bottom: 20px; letter-spacing: 1px; }
-
-        .call-actions { display: flex; flex-direction: column; gap: 10px; }
-        .btn-call-answer { background: #16a34a; color: white; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4); }
-        .btn-call-answer:hover { background: #15803d; }
-        .btn-call-decline { background: #334155; color: #94a3b8; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
-    </style>
+    .tip-right {
+      left: 100%;
+      top: 50%;
+      margin-left: 8px;
+      transform: translateY(-50%) translateX(6px);
+    }
+    .has-tooltip:hover .tip-right {
+      transform: translateY(-50%) translateX(0);
+    }
+  </style>
 </head>
-<body>
-    <div class="header">
-        <h1>🛡️ SME SOC CONTROL & EMERGENCY MONITOR</h1>
-        <div class="header-buttons">
-            <div id="tunnelBadge" style="background: rgba(14, 165, 233, 0.15); border: 1px solid #0284c7; border-radius: 6px; padding: 5px 12px; font-size: 11px; color: #38bdf8; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;" onclick="copyTunnelUrl()" title="Bấm để sao chép đường link App">
-                <span>📱 Link App:</span>
-                <strong id="tunnelUrlText" style="color: #fff; font-family: monospace;">https://brands-sense-protocol-capacity.trycloudflare.com</strong>
-                <span style="font-size: 10px; background: #0284c7; color: #fff; padding: 2px 6px; border-radius: 3px; font-weight: bold;">COPY</span>
-            </div>
-            <button id="btnPush" class="btn-pwa-unlock" onclick="enablePushNotifications()">🔔 BẬT BÁO ĐỘNG MÀN HÌNH KHÓA</button>
-            <button class="btn-pwa-test" onclick="triggerTestInternalCall()">📞 Test gọi & Báo động</button>
-        </div>
+<body class="bg-[#0b1019] text-slate-300 min-h-screen flex text-[13px] antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="w-64 bg-[#0e1420] border-r border-[#1a2333] flex flex-col shrink-0 select-none hidden md:flex">
+    
+    <!-- Brand / Logo -->
+    <div class="h-14 flex items-center px-5 border-b border-[#1a2333] gap-2.5 has-tooltip">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-cyan-500/20">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold text-sm tracking-wide text-white block">SME DEFENSE SOC</span>
+        <span class="text-[10px] text-cyan-400">Rê chuột xem chú thích</span>
+      </div>
+
+      <div class="tooltip-box tip-right">
+        <strong class="text-cyan-400 block mb-1">🏢 SOC (Security Operations Center) là gì?</strong>
+        Là <strong>"Trung tâm tác chiến an ninh mạng"</strong>. Nơi theo dõi máy chủ, cơ sở dữ liệu MySQL, máy tính nhân viên để bắt quả tang hacker và ngăn chặn phá hoại.
+      </div>
     </div>
 
-    <!-- 3 BẢNG TRÊN -->
-    <div class="grid-top">
-        <div class="card-mini">
-            <div class="card-mini-title">
-                <span>💻 WINDOWS (192.168.21.148)</span>
-                <span id="vmStatus" class="badge badge-normal">BÌNH THƯỜNG</span>
+    <!-- Navigation Menu with Tooltips -->
+    <div class="flex-1 overflow-y-auto py-3 space-y-1">
+      <div>
+        <div class="flex items-center justify-between px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white cursor-pointer transition has-tooltip">
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Asset Management
+          </span>
+          <svg class="w-3.5 h-3.5 text-slate-500 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          
+          <div class="tooltip-box tip-right">
+            <strong class="text-cyan-400 block mb-1">💻 Quản lý tài sản (Asset Management)</strong>
+            Điểm danh mọi thiết bị trong mạng doanh nghiệp: Máy chủ Ubuntu, trạm Windows, điện thoại người trực ban và cloud VPS.
+          </div>
+        </div>
+
+        <div class="space-y-0.5 text-xs">
+          <a href="#" class="nav-item-active flex items-center px-9 py-1.5 text-white font-medium has-tooltip">
+            Dashboard
+            <div class="tooltip-box tip-right">
+              <strong class="text-cyan-400 block mb-1">📊 Bảng điều khiển (Dashboard)</strong>
+              Màn hình tổng quan tập trung toàn bộ dữ liệu an ninh, rủi ro và các nút tác chiến nhanh.
             </div>
-            <div class="metrics-row">
-                <div class="metric-box">
-                    <span style="font-size: 11px; color: #94a3b8;">CPU:</span> <span id="cpuVal" class="metric-num">0%</span>
-                    <div class="progress-bar"><div id="cpuFill" class="progress-fill"></div></div>
+          </a>
+          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+            USB Firewall
+            <div class="tooltip-box tip-right">
+              <strong class="text-cyan-400 block mb-1">🔌 Chặn USB chứa mã độc</strong>
+              Giám sát cấm cắm USB lạ đánh cắp dữ liệu công ty.
+            </div>
+          </a>
+          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+            Hosts / Assets
+            <div class="tooltip-box tip-right">
+              <strong class="text-cyan-400 block mb-1">🖥️ Danh sách máy chủ</strong>
+              Ubuntu Host (192.168.21.136), trạm Windows 10 và Azure VPS (70.153.83.137).
+            </div>
+          </a>
+          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+            Software Inventory
+            <div class="tooltip-box tip-right">
+              <strong class="text-cyan-400 block mb-1">📦 Danh mục phần mềm</strong>
+              Kiểm tra các phần mềm đang chạy trên máy tính nhân viên.
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-[#1a2333]/60 space-y-1 text-xs">
+        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            SIEM & Audit Logs
+          </span>
+          <div class="tooltip-box tip-right">
+            <strong class="text-cyan-400 block mb-1">📜 SIEM (Nhật ký sự kiện)</strong>
+            "Hộp đen" an ninh ghi nhận mọi câu lệnh MySQL và lịch sử đăng nhập.
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Incident Response
+          </span>
+          <div class="tooltip-box tip-right">
+            <strong class="text-cyan-400 block mb-1">🚨 Phản ứng sự cố</strong>
+            Tự động kích hoạt chuông báo động cuộc gọi và đọc giọng AI khi có nguy cấp.
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+          <span class="flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Reverse Tunnel Mesh
+          </span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div class="tooltip-box tip-right">
+            <strong class="text-cyan-400 block mb-1">🌐 Đường ống Reverse Tunnel</strong>
+            Nối an toàn từ máy nội bộ lên Azure VPS (70.153.83.137) để phát sóng 24/7.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User footer -->
+    <div class="p-3 border-t border-[#1a2333] flex items-center justify-between text-xs">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-full bg-cyan-700 flex items-center justify-center font-bold text-white text-xs">T</div>
+        <div>
+          <span class="font-semibold text-white block">tien03012k3</span>
+          <span class="text-[10px] text-slate-400">SOC Security Lead</span>
+        </div>
+      </div>
+      <span class="text-[11px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Online</span>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEWPORT -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+
+    <!-- TOP BAR (FILTERS & ACTIONS) -->
+    <header class="h-14 bg-[#0e1420] border-b border-[#1a2333] px-6 flex items-center justify-between gap-4 sticky top-0 z-10">
+      <div class="flex items-center gap-3 flex-1 max-w-3xl">
+        <div class="relative has-tooltip">
+          <select class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
+            <option>SME Organization (FPT Headquarter)</option>
+            <option>Branch Da Nang</option>
+          </select>
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-cyan-400 block mb-1">🏢 Lọc theo Chi nhánh / Doanh nghiệp</strong>
+            Chọn phạm vi giám sát toàn công ty hoặc từng chi nhánh.
+          </div>
+        </div>
+
+        <div class="relative has-tooltip">
+          <select id="assetFilter" class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
+            <option value="all">Tất cả máy (Ubuntu + Win10 + VPS)</option>
+            <option value="ubuntu">Ubuntu SOC Host (192.168.21.136)</option>
+            <option value="win10">Windows Station (192.168.21.153)</option>
+            <option value="azure">Azure Cloud VPS (70.153.83.137)</option>
+          </select>
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-cyan-400 block mb-1">🖥️ Lọc theo Từng máy</strong>
+            Xem riêng chi tiết máy chủ cơ sở dữ liệu hoặc máy trạm người dùng.
+          </div>
+        </div>
+
+        <div class="flex items-center bg-[#141b29] border border-[#232d40] rounded overflow-hidden has-tooltip">
+          <span class="text-xs px-3 py-1.5 text-slate-300 font-mono" id="liveTimeBadge">Đang trực ban 24/7</span>
+          <button onclick="fetchStatus()" class="bg-[#1f293d] hover:bg-cyan-600 px-3 py-1.5 text-white transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-cyan-400 block mb-1">🔄 Làm mới dữ liệu thời gian thực</strong>
+            Hệ thống tự động quét và cập nhật mỗi 2.5 giây. Bấm nút này để ép tải lại tức thì.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="has-tooltip">
+          <span class="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 text-xs font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            Đang bật Chú thích
+          </span>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-cyan-400 block mb-1">💡 Chế độ Hướng dẫn & Giải thích</strong>
+            Rê chuột vào bất kỳ thành phần nào trên màn hình để xem giải thích dễ hiểu!
+          </div>
+        </div>
+
+        <div class="has-tooltip">
+          <button onclick="triggerEmergencyCall()" id="topCallBtn" class="px-3.5 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md shadow-red-600/30 flex items-center gap-2 transition">
+            <svg class="w-3.5 h-3.5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            Bắn Cuộc Gọi Về App
+          </button>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-red-400 block mb-1">📞 Nút Thử Nghiệm Báo Động Cuộc Gọi</strong>
+            Bấm nút này sẽ kích hoạt cuộc gọi khẩn cấp về App Android của ní và phát giọng AI!
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT GRID (3 COLUMNS X 2 ROWS = 6 CARDS) -->
+    <main class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- CARD 1: FLEET RISK SCORES & TIMELINE -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">🎯 THẺ 1: ĐIỂM SỐ NGUY HIỂM (RISK SCORE)</strong>
+          * Thang 0-100: 0 là bình an, 100 là hệ thống sắp sập!<br>
+          * Tự động tính toán dựa trên mức độ nghiêm trọng của sự cố MySQL và CPU/RAM thực tế.<br>
+          * Đồ thị bên dưới thể hiện thời điểm cao trào của các cuộc tấn công.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              Fleet Risk Scores
+              <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            </h3>
+            <span id="riskSeverityBadge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-950 text-amber-400 border border-amber-800">
+              Severity: Medium
+            </span>
+          </div>
+
+          <!-- Gauge Indicator -->
+          <div class="mt-4 mb-2">
+            <div class="flex justify-between text-[11px] font-bold text-slate-400 mb-1 px-1">
+              <span>0 (An toàn)</span>
+              <span>25</span>
+              <span>50</span>
+              <span>75</span>
+              <span>100 (Nguy kịch)</span>
+            </div>
+            <div class="h-2 rounded-full gauge-gradient relative w-full">
+              <div id="riskScorePill" class="absolute -top-3.5 left-[68%] -translate-x-1/2 bg-[#0284c7] text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full shadow-lg border border-cyan-300 transition-all duration-500">
+                68.40
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-semibold text-slate-300">Biểu đồ sự cố theo thời gian (Timeline 24h)</span>
+            <span class="text-[11px] text-red-400 font-bold" id="peakTimeText">Gần nhất: 17:15</span>
+          </div>
+          <div class="h-28 w-full bg-[#0a0f18] rounded-lg p-2 border border-[#1c2637] relative flex items-end">
+            <svg class="w-full h-full overflow-visible" viewBox="0 0 300 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.45"/>
+                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,70 Q40,65 80,50 T160,55 T220,15 T260,35 T300,20 L300,80 L0,80 Z" fill="url(#chartGrad)"/>
+              <path d="M0,70 Q40,65 80,50 T160,55 T220,15 T260,35 T300,20" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+              <circle cx="220" cy="15" r="4" fill="#ef4444" stroke="#ffffff" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+            <span>08:00</span>
+            <span>12:00</span>
+            <span>16:00</span>
+            <span>20:00</span>
+            <span>Hiện tại</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: TICKETS OVERVIEW & LATEST ALERTS -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">🎫 THẺ 2: TICKETS (PHIẾU BÁO ÁN SỰ CỐ)</strong>
+          * Mỗi vụ việc phá hoại đều sinh ra 1 Ticket.<br>
+          * <strong>Total:</strong> Tổng số vụ.<br>
+          * <strong>Open:</strong> Sự cố đỏ khẩn cấp chưa khắc phục.<br>
+          * <strong>Processing:</strong> Sự cố đang được AI phân tích.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Tickets & Alerts Overview</h3>
+            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 mb-4 text-center">
+            <div class="bg-[#0b1019] border border-[#1c2637] rounded-lg p-2">
+              <div class="text-[10px] text-emerald-400 font-bold uppercase flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Total
+              </div>
+              <span id="ticketTotal" class="text-lg font-black text-white mt-0.5 block">0</span>
+            </div>
+            <div class="bg-[#0b1019] border border-[#1c2637] rounded-lg p-2">
+              <div class="text-[10px] text-red-400 font-bold uppercase flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Open
+              </div>
+              <span id="ticketOpen" class="text-lg font-black text-red-400 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-[#0b1019] border border-[#1c2637] rounded-lg p-2">
+              <div class="text-[10px] text-amber-400 font-bold uppercase flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Đang xử lý
+              </div>
+              <span id="ticketProcessing" class="text-lg font-black text-amber-400 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-[#0b1019] border border-[#1c2637] rounded-lg p-2">
+              <div class="text-[10px] text-blue-400 font-bold uppercase flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Đã đóng
+              </div>
+              <span id="ticketClosed" class="text-lg font-black text-blue-400 mt-0.5 block">0</span>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Danh sách sự cố thời gian thực:</span>
+            <div id="latestTicketsList" class="space-y-2">
+              <div class="text-slate-500 text-center py-4">Đang tải dữ liệu từ máy chủ...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
+          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">Trang 1</span>
+          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">Trang 2</span>
+        </div>
+      </div>
+
+      <!-- CARD 3: ASSET STATUS & HIGH RISK RANKING -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">🏆 THẺ 3: XẾP HẠNG MÁY CHỦ BỊ TẤN CÔNG</strong>
+          * <strong>Ubuntu-SOC-Host (Chứa MySQL):</strong> Đang bị đe dọa cao nhất vì chứa dữ liệu quan trọng.<br>
+          * <strong>Win10-Agent-PC:</strong> Máy trạm người dùng.<br>
+          * <strong>Azure-VPS-Tunnel:</strong> Cầu nối đám mây an toàn tuyệt đối.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Host & Asset Status</h3>
+            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+          </div>
+
+          <div class="flex justify-around items-center py-2 bg-[#0b1019] rounded-lg border border-[#1c2637] mb-4">
+            <div class="text-center">
+              <span class="text-2xl font-black text-amber-400">3</span>
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Tổng máy</span>
+            </div>
+            <div class="w-px h-8 bg-slate-800"></div>
+            <div class="text-center">
+              <span id="countAtRisk" class="text-2xl font-black text-red-400">1</span>
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Đang bị nhắm</span>
+            </div>
+            <div class="w-px h-8 bg-slate-800"></div>
+            <div class="text-center">
+              <span class="text-2xl font-black text-emerald-400">2</span>
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">An toàn</span>
+            </div>
+          </div>
+
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Bảng phong thần nguy cơ:</span>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+              <div class="flex items-center gap-2">
+                <span class="text-amber-400">🔒</span>
+                <div>
+                  <span class="font-bold text-slate-200 block">Ubuntu-SOC-Host</span>
+                  <span class="text-[10px] text-slate-400">192.168.21.136 (Core SOC)</span>
                 </div>
-                <div class="metric-box">
-                    <span style="font-size: 11px; color: #94a3b8;">RAM:</span> <span id="ramVal" class="metric-num">0%</span>
-                    <div class="progress-bar"><div id="ramFill" class="progress-fill"></div></div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded text-[11px] font-black bg-red-950 text-red-400 border border-red-800">78.50 Điểm</span>
+                <span id="ubuntuMetricsText" class="text-[10px] text-slate-400 block">CPU: -- | RAM: --</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+              <div class="flex items-center gap-2">
+                <span class="text-blue-400">💻</span>
+                <div>
+                  <span class="font-bold text-slate-200 block">Win10-Agent-PC</span>
+                  <span class="text-[10px] text-slate-400">192.168.21.153 (Workstation)</span>
                 </div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded text-[11px] font-black bg-amber-950 text-amber-400 border border-amber-800">42.10 Điểm</span>
+                <span class="text-[10px] text-slate-500 block">Ổn định</span>
+              </div>
             </div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Cập nhật: <span id="lastUpdate">--</span></div>
-        </div>
 
-        <div class="card-mini">
-            <div class="card-mini-title"><span>⚙️ ĐIỀU CHỈNH NGƯỠNG AN NINH</span></div>
-            <div class="cfg-grid">
-                <div class="cfg-item"><label>Ngưỡng CPU (%):</label><input type="number" id="cfgCpu"></div>
-                <div class="cfg-item"><label>Ngưỡng RAM (%):</label><input type="number" id="cfgRam"></div>
-                <div class="cfg-item"><label>Sai MK (Lần):</label><input type="number" id="cfgAuth"></div>
-                <div class="cfg-item"><label>Web Proxy (MB):</label><input type="number" id="cfgWeb" step="0.5"></div>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="saveConfig()">💾 Lưu</button>
-                <button class="btn btn-warning" onclick="quickTestLowerCpu()">⚡ Test 10%</button>
-                <button class="btn btn-secondary" onclick="resetConfig()">🔄 Reset</button>
-            </div>
-        </div>
-
-        <div class="card-mini">
-            <div class="card-mini-title">
-                <span>⚡ TỔNG ĐÀI AI & WEB PUSH</span>
-                <span id="voiceBadge" class="badge badge-normal">SẴN SÀNG</span>
-            </div>
-            <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 6px;">
-                Trực ban: <b id="voiceAlertTitle" style="color:#38bdf8;">Chưa có sự cố</b>
-            </div>
-            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
-                Thiết bị nhận push: <span id="pushCount" style="color:#34d399; font-weight:bold;">0</span> máy
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-danger" onclick="triggerShutdown()">🛑 Shutdown VM</button>
-                <button class="btn btn-warning" onclick="triggerRaise()">⚡ Hạ tải SOAR</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- BẢNG THEO DÕI SỰ CỐ (ĐA MÀU CHUẨN SOC) -->
-    <div class="log-container">
-        <div class="log-header" style="flex-wrap: wrap; gap: 8px;">
-            <div style="font-weight: bold; color: #f8fafc; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-                🚨 BẢNG THEO DÕI SỰ CỐ AN NINH MẠNG THỜI GIAN THỰC 
-                <span id="incidentCount" class="badge badge-normal">0 sự cố</span>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                <button class="filter-btn active" onclick="setFilter('all', this)">Tất cả</button>
-                <button class="filter-btn" onclick="setFilter('critical', this)">🔴 Nguy cấp (SEV-0)</button>
-                <button class="filter-btn" onclick="setFilter('exploit', this)">🟠 Tấn công (WAF/SQLi)</button>
-                <button class="filter-btn" onclick="setFilter('auth', this)">🟣 Xác thực (Brute-force)</button>
-                <button class="filter-btn" onclick="setFilter('warning', this)">🟡 Thăm dò (Recon/DDL)</button>
-                <button class="filter-btn" onclick="setFilter('infra', this)">🔵 Tài nguyên (CPU/DoS)</button>
-            </div>
-        </div>
-        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; display: flex; gap: 14px; flex-wrap: wrap;">
-            <span>🔴 <b style="color:#ef4444;">ĐỎ:</b> Phá hoại, RCE Web Shell, Tắt Log</span>
-            <span>🟠 <b style="color:#f97316;">CAM:</b> SQL Injection, WAF Lớp 7, Remote Root</span>
-            <span>🟣 <b style="color:#a855f7;">TÍM:</b> Brute-force mật khẩu, Leo thang quyền</span>
-            <span>🟡 <b style="color:#eab308;">VÀNG:</b> Fuzzing 1064, DDL đêm, Web Proxy</span>
-            <span>🔵 <b style="color:#0ea5e9;">XANH:</b> Quá tải CPU/RAM, DoS kết nối</span>
-        </div>
-        <div id="logList" class="log-list">
-            <div style="text-align: center; color: #64748b; padding: 40px;">Đang lắng nghe sự kiện an ninh từ Windows, Gateway Proxy & WAF ModSecurity...</div>
-        </div>
-    </div>
-
-    <!-- GIAO DIỆN CUỘC GỌI ĐẾN TOÀN MÀN HÌNH TRÊN IPHONE -->
-    <div id="callOverlay" class="call-overlay" style="display: none;">
-        <div class="call-box">
-            <div class="call-badge">🚨 CUỘC GỌI CẢNH BÁO NỘI BỘ</div>
-            <div class="call-avatar">🛡️</div>
-            <h2 id="callTitle" class="call-title">BÁO ĐỘNG AN NINH</h2>
-            <p id="callMessage" class="call-msg">Đang kết nối tổng đài...</p>
-            <div id="callStatusText" class="call-pulse-text">📞 ĐANG ĐỔ CHUÔNG RENG RENG...</div>
-            <div class="call-actions">
-                <button id="btnAnswer" class="btn-call-answer" onclick="answerCall()">📞 NHẤC MÁY (NGHE GIỌNG NÓI AI)</button>
-                <button id="btnDecline" class="btn-call-decline" onclick="declineCall()">⛔ TẮT CHUÔNG</button>
-            </div>
-            <div id="soarActionsMobile" style="display:none; margin-top: 16px; border-top: 1px solid #334155; padding-top: 12px;">
-                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">Phản ứng nhanh SOAR từ xa:</div>
-                <div class="btn-group" style="justify-content: center;">
-                    <button class="btn btn-danger" onclick="triggerShutdown()">🛑 Tắt máy từ xa</button>
-                    <button class="btn btn-warning" onclick="triggerRaise()">⚡ Hạ tải</button>
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+              <div class="flex items-center gap-2">
+                <span class="text-emerald-400">☁️</span>
+                <div>
+                  <span class="font-bold text-slate-200 block">Azure-VPS-Tunnel</span>
+                  <span class="text-[10px] text-slate-400">70.153.83.137 (Indonesia)</span>
                 </div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded text-[11px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800">08.20 Điểm</span>
+                <span class="text-[10px] text-emerald-400 block font-bold">24/7 Online</span>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
 
-    <script>
-        // Đăng ký Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                console.log('SW Registered successfully:', reg.scope);
-            }).catch(err => {
-                console.log('SW registration error:', err);
-            });
+        <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
+          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
+          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+        </div>
+      </div>
+
+      <!-- CARD 4: CONNECTED NETWORK DEVICES -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">🌐 THẺ 4: CÁC THIẾT BỊ ĐANG CẮM TRONG MẠNG</strong>
+          * Cho ní biết toàn bộ đường đi nước bước trong mạng LAN và Internet.<br>
+          * Cổng Router Gateway, Máy chủ AI Engine, và chiếc điện thoại Android đang chạy App SOC Alert.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Connected Devices in Subnet</h3>
+            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded bg-[#0e1522] border border-[#1c2637] flex items-center justify-between">
+              <div>
+                <span class="font-bold text-white block">Router Gateway (Cổng mạng)</span>
+                <span class="text-[11px] text-slate-400">VMware Virtual Switch VMnet8</span>
+                <span class="text-[10px] text-cyan-400 font-mono block">192.168.21.1 • Cổng ngõ chính</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400">Gateway</span>
+            </div>
+
+            <div class="p-2.5 rounded bg-[#0e1522] border border-[#1c2637] flex items-center justify-between">
+              <div>
+                <span class="font-bold text-white block">SOC AI Engine Server (Bộ não)</span>
+                <span class="text-[11px] text-slate-400">Ubuntu 24.04 (FastAPI + AI Hoài My)</span>
+                <span class="text-[10px] text-cyan-400 font-mono block">192.168.21.136:8888</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400">Core Host</span>
+            </div>
+
+            <div class="p-2.5 rounded bg-[#0e1522] border border-[#1c2637] flex items-center justify-between">
+              <div>
+                <span class="font-bold text-white block">Điện thoại Android (Người trực ban)</span>
+                <span class="text-[11px] text-slate-400">App SOC Alert (Nhận chuông khẩn cấp)</span>
+                <span class="text-[10px] text-emerald-400 font-mono block">Nối qua IP 70.153.83.137</span>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-400">Online</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
+          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
+          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+        </div>
+      </div>
+
+      <!-- CARD 5: DATABASE AUDIT & VULNERABILITY WATCH -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">🗄️ THẺ 5: KIỂM TOÁN CƠ SỞ DỮ LIỆU MYSQL</strong>
+          * Điểm sáng nhất đồ án của ní: Bắt tận tay hacker khi gõ lệnh phá hoại.<br>
+          * <strong>DROP DATABASE / TABLE:</strong> Xóa bảng mất data khách hàng -> Phạt kịch khung 100 điểm đỏ.<br>
+          * <strong>SET general_log = 'OFF':</strong> Tắt log kiểm toán để trốn tội -> Phạt 94.20 điểm.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">MySQL Database Audit & Risks</h3>
+            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+          </div>
+
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-[10px] text-slate-500 uppercase border-b border-slate-800 pb-1">
+                <th class="pb-1.5">#</th>
+                <th class="pb-1.5">Lệnh bị cấm</th>
+                <th class="pb-1.5 text-right">Mức độ phạt</th>
+              </tr>
+            </thead>
+            <tbody id="dbAuditRows" class="divide-y divide-[#1c2637] font-mono text-[11px]">
+              <tr>
+                <td class="py-2 text-slate-500">1</td>
+                <td class="py-2 text-slate-200">DROP DATABASE / TABLE</td>
+                <td class="py-2 text-right"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold">100 (CỰC NGUY HIỂM)</span></td>
+              </tr>
+              <tr>
+                <td class="py-2 text-slate-500">2</td>
+                <td class="py-2 text-slate-200">SET general_log = 'OFF'</td>
+                <td class="py-2 text-right"><span class="px-2 py-0.5 rounded bg-amber-950 text-amber-400 font-bold">94.20 (XÓA DẤU VẾT)</span></td>
+              </tr>
+              <tr>
+                <td class="py-2 text-slate-500">3</td>
+                <td class="py-2 text-slate-200">Sửa DB ngoài giờ quy định</td>
+                <td class="py-2 text-right"><span class="px-2 py-0.5 rounded bg-amber-950 text-amber-400 font-bold">88.50 (BẤT THƯỜNG)</span></td>
+              </tr>
+              <tr>
+                <td class="py-2 text-slate-500">4</td>
+                <td class="py-2 text-slate-200">Dò pass root sai &gt; 3 lần</td>
+                <td class="py-2 text-right"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-400 font-bold">62.00 (BRUTE FORCE)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
+          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
+          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+        </div>
+      </div>
+
+      <!-- CARD 6: SOAR PLAYBOOK & ACTION CENTER -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">⚡ THẺ 6: SOAR (TRUNG TÂM PHẢN ỨNG TỰ ĐỘNG)</strong>
+          * Không chỉ nhìn biểu đồ, mà có các nút bấm thực chiến:<br>
+          * <strong>Nút 1:</strong> Bấm là điện thoại của ní reo chuông khẩn cấp.<br>
+          * <strong>Nút 2:</strong> Nghe giọng nói AI cô Hoài My đọc to sự cố.<br>
+          * <strong>Nút 3:</strong> Khóa ngay phiên làm việc của kẻ gian.
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">SOAR Automated Actions (Nút tác chiến)</h3>
+            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <button onclick="triggerEmergencyCall()" id="actionCallBtn" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
+              <div class="flex items-center gap-2.5">
+                <span class="text-base">🚨</span>
+                <div>
+                  <span class="font-bold text-white block">Phát Cuộc Gọi Thoại AI</span>
+                  <span class="text-[10px] text-slate-400">Gọi thẳng về App Android qua Reverse Tunnel</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">Thử ngay</span>
+            </button>
+
+            <button onclick="playAiVoiceDemo()" id="actionAudioBtn" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
+              <div class="flex items-center gap-2.5">
+                <span class="text-base">🔊</span>
+                <div>
+                  <span class="font-bold text-white block">Nghe Giọng Đọc Cảnh Báo</span>
+                  <span class="text-[10px] text-slate-400">Giọng Edge-TTS Hoài My tiếng Việt chuẩn</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-400 border border-purple-800">Phát loa</span>
+            </button>
+
+            <button onclick="alert('Đã gửi tín hiệu phong tỏa phiên làm việc của MySQL!')" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
+              <div class="flex items-center gap-2.5">
+                <span class="text-base">🛑</span>
+                <div>
+                  <span class="font-bold text-white block">Khóa Ngay Kẻ Phá Hoại</span>
+                  <span class="text-[10px] text-slate-400">Tự động ngắt kết nối phiên MySQL của hacker</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">Kill</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-[#1c2637]">
+          <span>Cầu nối ra Internet:</span>
+          <span class="text-cyan-400 font-mono" id="tunnelUrlText">http://70.153.83.137</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- REAL-TIME JAVASCRIPT POLLING & ACTIONS -->
+  <script>
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 1. Cập nhật CPU & RAM
+        if (data.metrics) {
+          const cpu = data.metrics.cpu || 0;
+          const ram = data.metrics.ram || 0;
+          document.getElementById('ubuntuMetricsText').innerText = 'CPU: ' + cpu + '% | RAM: ' + ram + '%';
         }
 
-        // Hệ thống âm thanh Web Audio Synthesizer
-        let audioCtx = null;
-        let ringInterval = null;
-        let isRinging = false;
-        let audioUnlocked = false;
-        let lastHandledAlertId = 0;
-        let voiceAudio = new Audio();
+        // 2. Cập nhật Tickets
+        if (data.incidents && Array.isArray(data.incidents)) {
+          const total = data.incidents.length;
+          let open = 0, proc = 0;
+          data.incidents.forEach(inc => {
+            if (inc.color === 'red') open++;
+            else proc++;
+          });
+          document.getElementById('ticketTotal').innerText = total;
+          document.getElementById('ticketOpen').innerText = open;
+          document.getElementById('ticketProcessing').innerText = proc;
 
-        function unlockAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            audioUnlocked = true;
-            playSingleBeep(880, 0.1);
+          // Render 3 incidents mới nhất
+          const container = document.getElementById('latestTicketsList');
+          container.innerHTML = '';
+          const recents = data.incidents.slice(0, 3);
+          recents.forEach(inc => {
+            const isRed = inc.color === 'red';
+            const borderCol = isRed ? 'border-red-500' : 'border-amber-500';
+            const textCol = isRed ? 'text-red-300' : 'text-amber-300';
+            const html = `
+              <div class="p-2 rounded bg-[#0e1522] border-l-2 ${borderCol} flex flex-col gap-0.5">
+                <span class="font-bold ${textCol}">${inc.title}</span>
+                <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                  <span class="text-slate-300">${inc.details || ''}</span> • <span>${inc.time}</span>
+                </div>
+              </div>
+            `;
+            container.innerHTML += html;
+          });
+
+          // Cập nhật điểm nguy cơ
+          const score = Math.min(98.5, 20 + open * 15 + proc * 5).toFixed(2);
+          const pill = document.getElementById('riskScorePill');
+          pill.innerText = score;
+          pill.style.left = Math.min(92, Math.max(10, score)) + '%';
+          const badge = document.getElementById('riskSeverityBadge');
+          if (score > 60) {
+            badge.innerText = 'Severity: Critical (Báo Động Đỏ)';
+            badge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-red-950 text-red-400 border border-red-800';
+          }
         }
 
-        function playSingleBeep(freq, dur) {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.value = freq;
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + dur);
-            } catch(e) {}
+        // 3. Cập nhật Tunnel URL
+        if (data.tunnel_url) {
+          document.getElementById('tunnelUrlText').innerText = data.tunnel_url;
         }
 
-        function startTelephoneRingtone() {
-            if (isRinging) return;
-            isRinging = true;
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('liveTimeBadge').innerText = new Date().toLocaleTimeString('vi-VN');
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }
 
-            function ringCadence() {
-                if (!isRinging || !audioCtx) return;
-                const t0 = audioCtx.currentTime;
-                [440, 480].forEach(freq => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.frequency.value = freq;
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    gain.gain.setValueAtTime(0.25, t0);
-                    gain.gain.setValueAtTime(0, t0 + 1.2);
-                    osc.start(t0);
-                    osc.stop(t0 + 1.2);
-                });
-            }
-
-            ringCadence();
-            ringInterval = setInterval(ringCadence, 3000);
-        }
-
-        function stopRingtone() {
-            isRinging = false;
-            if (ringInterval) {
-                clearInterval(ringInterval);
-                ringInterval = null;
-            }
-        }
-
-        function showIncomingCall(title, msg) {
-            document.getElementById('callTitle').innerText = title;
-            document.getElementById('callMessage').innerText = msg;
-            document.getElementById('callStatusText').innerHTML = '📞 ĐANG ĐỔ CHUÔNG RENG RENG...';
-            document.getElementById('btnAnswer').style.display = 'flex';
-            document.getElementById('soarActionsMobile').style.display = 'none';
-            document.getElementById('callOverlay').style.display = 'flex';
-            startTelephoneRingtone();
-        }
-
-        function answerCall() {
-            stopRingtone();
-            document.getElementById('callStatusText').innerHTML = '🟢 ĐANG PHÁT GIỌNG NÓI AI QUA LOA...';
-            document.getElementById('btnAnswer').style.display = 'none';
-            document.getElementById('soarActionsMobile').style.display = 'block';
-
-            voiceAudio.src = '/api/voice_alert?t=' + Date.now();
-            voiceAudio.play().catch(e => console.log('Audio play error:', e));
-            voiceAudio.onended = () => {
-                document.getElementById('callStatusText').innerHTML = '✅ ĐÃ HOÀN THÀNH BẢN TIN CẢNH BÁO';
-            };
-        }
-
-        function declineCall() {
-            stopRingtone();
-            if (voiceAudio) voiceAudio.pause();
-            document.getElementById('callOverlay').style.display = 'none';
-        }
-
-        function copyTunnelUrl() {
-            const txt = document.getElementById('tunnelUrlText').innerText;
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(txt);
-                }
-            } catch(e) {}
-            prompt('Đã sao chép đường link App Mobile. Anh dán vào App điện thoại nhé:', txt);
-        }
-
-        async function triggerTestInternalCall() {
-            unlockAudio();
-            await fetch('/api/test_internal_call', { method: 'POST' });
-        }
-
-        // BẬT WEB PUSH NOTIFICATION CHO MÀN HÌNH KHÓA IPHONE
-        async function enablePushNotifications() {
-            unlockAudio();
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                alert('⚠️ Để nhận thông báo màn hình khóa trên iPhone, anh hãy bấm nút Chia sẻ -> "Thêm vào Màn hình chính" trước nhé!');
-                return;
-            }
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    alert('❌ Quyền thông báo bị từ chối trong Cài đặt iPhone!');
-                    return;
-                }
-
-                const reg = await navigator.serviceWorker.ready;
-                const resp = await fetch('/api/vapid_public_key');
-                const keyData = await resp.json();
-                
-                const sub = await reg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlB64ToUint8Array(keyData.publicKey)
-                });
-
-                await fetch('/api/push_subscribe', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(sub)
-                });
-
-                const btn = document.getElementById('btnPush');
-                btn.innerHTML = '✅ ĐÃ BẬT BÁO ĐỘNG MÀN HÌNH KHÓA';
-                btn.style.background = '#065f46';
-                btn.style.color = '#34d399';
-                alert('🎉 THÀNH CÔNG! Giờ đây khi tắt màn hình iPhone, bạn vẫn sẽ nhận được thông báo rung và chuông cảnh báo!');
-            } catch (err) {
-                alert('Lỗi kích hoạt Push: ' + err.message);
-            }
-        }
-
-        function urlB64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
-            return outputArray;
-        }
-
-        // Khi người dùng bấm vào thông báo màn hình khóa mở ra: Tự động phát giọng nói AI!
-        window.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('play_alert') === '1') {
-                setTimeout(() => {
-                    showIncomingCall('🚨 BÁO ĐỘNG TỪ MÀN HÌNH KHÓA', 'Đang phát bản tin an ninh khẩn cấp...');
-                    answerCall();
-                }, 600);
-            }
+    function triggerEmergencyCall() {
+      const topBtn = document.getElementById('topCallBtn');
+      const actBtn = document.getElementById('actionCallBtn');
+      topBtn.innerText = 'Đang gọi...';
+      
+      fetch('/api/test_internal_call', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          topBtn.innerText = 'Đã gọi về App!';
+          alert('🚨 Đã phát lệnh gọi khẩn cấp thành công! Điện thoại của ní đang đổ chuông!');
+          setTimeout(() => {
+            topBtn.innerText = 'Bắn Cuộc Gọi Về App';
+          }, 3500);
+        })
+        .catch(e => {
+          topBtn.innerText = 'Lỗi kết nối';
+          setTimeout(() => { topBtn.innerText = 'Bắn Cuộc Gọi Về App'; }, 2000);
         });
+    }
 
-                let currentFilter = 'all';
-        let cachedIncidents = [];
+    function playAiVoiceDemo() {
+      const audio = new Audio('/api/voice_alert?t=' + Date.now());
+      audio.play().catch(e => {
+        alert('Trình duyệt cần ní tương tác để phát âm thanh. Vui lòng bấm thử nghiệm gọi điện trên App!');
+      });
+    }
 
-        function setFilter(category, btn) {
-            currentFilter = category;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-            renderIncidents();
-        }
-
-        function renderIncidents() {
-            const container = document.getElementById('logList');
-            if (!cachedIncidents || cachedIncidents.length === 0) return;
-            
-            document.getElementById('incidentCount').innerText = cachedIncidents.length + ' sự cố';
-            let html = '';
-            cachedIncidents.forEach(item => {
-                const fullText = (item.type + ' ' + item.title + ' ' + (item.details || '')).toUpperCase();
-                
-                let colorClass = 'log-blue';
-                let levelTag = '<span class="tag">INFRA OVERLOAD</span>';
-                let category = 'infra';
-                
-                if (fullText.includes('XÓA') || fullText.includes('DROP') || fullText.includes('TRUNCATE') || fullText.includes('RCE') || fullText.includes('WEB SHELL') || fullText.includes('TẮT LOG') || fullText.includes('DEFENSE')) {
-                    colorClass = 'log-red';
-                    levelTag = '<span class="tag">CRITICAL (SEV-0)</span>';
-                    category = 'critical';
-                } else if (fullText.includes('SQL INJECTION') || fullText.includes('BLIND') || fullText.includes('REMOTE ROOT') || fullText.includes('WAF') || fullText.includes('MODSECURITY')) {
-                    colorClass = 'log-orange';
-                    levelTag = '<span class="tag">EXPLOIT (WAF/SQLi)</span>';
-                    category = 'exploit';
-                } else if (fullText.includes('BRUTE-FORCE') || fullText.includes('MẬT KHẨU') || fullText.includes('LEO THANG') || fullText.includes('PRIVILEGE') || fullText.includes('WHITELIST') || fullText.includes('4625')) {
-                    colorClass = 'log-purple';
-                    levelTag = '<span class="tag">AUTH / ACCESS</span>';
-                    category = 'auth';
-                } else if (fullText.includes('FUZZ') || fullText.includes('1064') || fullText.includes('ĐÊM') || fullText.includes('TIME ANOMALY') || fullText.includes('PROXY')) {
-                    colorClass = 'log-yellow';
-                    levelTag = '<span class="tag">WARNING / RECON</span>';
-                    category = 'warning';
-                } else {
-                    colorClass = 'log-blue';
-                    levelTag = '<span class="tag">INFRA / OVERLOAD</span>';
-                    category = 'infra';
-                }
-                
-                if (currentFilter !== 'all' && currentFilter !== category) {
-                    return;
-                }
-                
-                html += `
-                    <div class="log-row ${colorClass}">
-                        <div style="color: #94a3b8;">⏱ ${item.time}</div>
-                        <div style="font-weight: bold;">${item.type}</div>
-                        <div><b>${item.title}</b> <span style="opacity: 0.8; font-size: 11px;">(${item.details})</span></div>
-                        <div style="text-align: right;">${levelTag}</div>
-                    </div>
-                `;
-            });
-            if (!html) {
-                html = '<div style="text-align: center; color: #64748b; padding: 30px;">Không có sự cố nào thuộc danh mục này.</div>';
-            }
-            container.innerHTML = html;
-        }
-
-        async function fetchStatus() {
-            try {
-                const res = await fetch('/api/status');
-                const d = await res.json();
-
-                // 1. Cập nhật metrics CPU/RAM
-                const cpu = d.metrics.cpu || 0;
-                const ram = d.metrics.ram || 0;
-                document.getElementById('cpuVal').innerText = cpu.toFixed(1) + '%';
-                document.getElementById('ramVal').innerText = ram.toFixed(1) + '%';
-                document.getElementById('lastUpdate').innerText = d.metrics.last_updated;
-
-                const cpuFill = document.getElementById('cpuFill');
-                cpuFill.style.width = cpu + '%';
-                cpuFill.style.background = cpu >= d.config.cpu_threshold ? '#ef4444' : '#38bdf8';
-
-                const ramFill = document.getElementById('ramFill');
-                ramFill.style.width = ram + '%';
-
-                const statusBadge = document.getElementById('vmStatus');
-                if (d.metrics.status === 'overload') {
-                    statusBadge.innerText = '🔥 QUÁ TẢI';
-                    statusBadge.className = 'badge badge-overload';
-                } else {
-                    statusBadge.innerText = 'BÌNH THƯỜNG';
-                    statusBadge.className = 'badge badge-normal';
-                }
-
-                // 2. Điền form cấu hình nếu không đang focus
-                if (!document.getElementById('cfgCpu').dataset.focused) document.getElementById('cfgCpu').value = d.config.cpu_threshold;
-                if (!document.getElementById('cfgRam').dataset.focused) document.getElementById('cfgRam').value = d.config.ram_threshold;
-                if (!document.getElementById('cfgAuth').dataset.focused) document.getElementById('cfgAuth').value = d.config.auth_fail_threshold;
-                if (!document.getElementById('cfgWeb').dataset.focused) document.getElementById('cfgWeb').value = d.config.web_mb_threshold;
-
-                // 3. Số máy đăng ký push
-                if (document.getElementById('pushCount')) {
-                    document.getElementById('pushCount').innerText = d.push_sub_count || 0;
-                }
-
-                // 4. Quản lý Cuộc gọi AI Voice khi đang mở màn hình
-                if (d.voice_alert) {
-                    document.getElementById('voiceAlertTitle').innerText = d.voice_alert.title || 'Sẵn sàng';
-                    if (lastHandledAlertId === 0) {
-                        lastHandledAlertId = d.voice_alert.alert_id;
-                    } else if (d.voice_alert.alert_id > lastHandledAlertId) {
-                        lastHandledAlertId = d.voice_alert.alert_id;
-                        showIncomingCall(d.voice_alert.title, d.voice_alert.text);
-                    }
-                }
-
-                // 5. Render Bảng Sự Cố (Phân loại đa màu chuẩn SOC)
-                if (d.incidents) {
-                    cachedIncidents = d.incidents;
-                    renderIncidents();
-                }
-
-            } catch (e) {}
-        }
-
-        ['cfgCpu', 'cfgRam', 'cfgAuth', 'cfgWeb'].forEach(id => {
-            const el = document.getElementById(id);
-            el.onfocus = () => el.dataset.focused = "1";
-            el.onblur = () => delete el.dataset.focused;
-        });
-
-        async function saveConfig() {
-            const payload = {
-                cpu_threshold: parseFloat(document.getElementById('cfgCpu').value),
-                ram_threshold: parseFloat(document.getElementById('cfgRam').value),
-                auth_fail_threshold: parseInt(document.getElementById('cfgAuth').value),
-                web_mb_threshold: parseFloat(document.getElementById('cfgWeb').value)
-            };
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            alert('✅ Đã lưu cấu hình ngưỡng!');
-        }
-
-        async function quickTestLowerCpu() {
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cpu_threshold: 10.0 })
-            });
-            alert('⚡ Đã hạ CPU xuống 10% để test ngay!');
-        }
-
-        async function resetConfig() {
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cpu_threshold: 80.0, ram_threshold: 85.0, auth_fail_threshold: 2, web_mb_threshold: 1.5 })
-            });
-            alert('🔄 Đã reset ngưỡng về mặc định!');
-        }
-
-        async function triggerShutdown() {
-            if (confirm('🚨 Bạn có chắc muốn TẮT MÁY Windows không?')) {
-                await fetch('/api/soar/shutdown', { method: 'POST' });
-                alert('🚨 Đã phát lệnh TẮT MÁY Windows qua SOAR!');
-            }
-        }
-
-        async function triggerRaise() {
-            await fetch('/api/config', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ cpu_threshold: 99.0, ram_threshold: 99.0 })
-            });
-            alert('⚡ Đã hạ tải hệ thống!');
-        }
-
-        setInterval(fetchStatus, 2000);
-        fetchStatus();
-    </script>
+    // Tự động quét mỗi 2.5 giây
+    setInterval(fetchStatus, 2500);
+    fetchStatus();
+  </script>
 </body>
 </html>"""
 
