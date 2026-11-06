@@ -131,7 +131,7 @@
         android:orientation="horizontal"
         android:weightSum="2">
 
-        <!-- NÚT 1: NHẤC MÁY (MÀU ĐỎ theo đúng yêu cầu người dùng) -->
+        <!-- NÚT 1: NHẤC MÁY (MÀU XANH LÁ CHUẨN ĐIỆN THOẠI) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -143,7 +143,7 @@
                 android:id="@+id/btnAnswerCall"
                 android:layout_width="76dp"
                 android:layout_height="76dp"
-                android:background="@drawable/bg_btn_call_red"
+                android:background="@drawable/bg_btn_call_green"
                 android:contentDescription="Nhấc máy"
                 android:elevation="8dp"
                 android:padding="18dp"
@@ -155,13 +155,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="NHẤC MÁY"
-                android:textColor="#EF4444"
+                android:textColor="#22C55E"
                 android:textSize="13sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
         </LinearLayout>
 
-        <!-- NÚT 2: TỪ CHỐI (MÀU XANH theo đúng yêu cầu người dùng) -->
+        <!-- NÚT 2: TỪ CHỐI (MÀU ĐỎ CHUẨN ĐIỆN THOẠI) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -173,7 +173,7 @@
                 android:id="@+id/btnDeclineCall"
                 android:layout_width="76dp"
                 android:layout_height="76dp"
-                android:background="@drawable/bg_btn_call_green"
+                android:background="@drawable/bg_btn_call_red"
                 android:contentDescription="Từ chối"
                 android:elevation="8dp"
                 android:padding="18dp"
@@ -185,7 +185,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="TỪ CHỐI"
-                android:textColor="#22C55E"
+                android:textColor="#EF4444"
                 android:textSize="13sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />

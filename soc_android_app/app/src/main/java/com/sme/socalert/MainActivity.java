@@ -82,7 +82,18 @@ public class MainActivity extends AppCompatActivity {
             swipeRefresh.setOnRefreshListener(() -> {
                 webView.reload();
             });
+            // Chỉ cho phép kéo refresh khi đang ở đỉnh trang web
+            webView.getViewTreeObserver().addOnScrollChangedListener(() -> {
+                if (webView.getScrollY() == 0) {
+                    swipeRefresh.setEnabled(true);
+                } else {
+                    swipeRefresh.setEnabled(false);
+                }
+            });
         }
+
+        // Setup WebView với đầy đủ JavaScript và chế độ hiển thị Dashboard
+        setupWebView();
 
         btnQuickTest.setOnClickListener(v -> triggerTestCall());
 
@@ -123,14 +134,14 @@ public class MainActivity extends AppCompatActivity {
         ws.setDatabaseEnabled(true);
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
-        ws.setSupportZoom(false);
-        ws.setBuiltInZoomControls(false);
+        ws.setSupportZoom(true);
+        ws.setBuiltInZoomControls(true);
         ws.setDisplayZoomControls(false);
         ws.setCacheMode(WebSettings.LOAD_DEFAULT);
         ws.setMediaPlaybackRequiresUserGesture(false);
 
         webView.setVerticalScrollBarEnabled(true);
-        webView.setHorizontalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(true);
 
         CookieManager.getInstance().setAcceptCookie(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

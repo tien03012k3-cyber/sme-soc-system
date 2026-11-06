@@ -1139,24 +1139,7 @@ def dashboard_html():
       background-color: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
     }
-      /* MOBILE TOUCH & SCROLL MOMENTUM */
-    @media (max-width: 768px) {
-      body {
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-      }
-      .tab-content {
-        padding: 0.75rem !important;
-        gap: 0.85rem !important;
-      }
-      #view-dashboard {
-        grid-template-columns: 1fr !important;
-      }
-      /* Tắt hover tooltip trên điện thoại để không bị kẹt khi chạm ngón tay */
-      .tooltip-box {
-        display: none !important;
-      }
-    }
+      /* Giữ nguyên 100% giao diện dashboard chuẩn trên mọi thiết bị */
   </style>
 </head>
 <body class="bg-[#0b1019] text-slate-300 min-h-screen flex text-[13px] antialiased selection:bg-cyan-500 selection:text-black">
@@ -2133,9 +2116,8 @@ def dashboard_html():
       }
     }
 
-    // Tự động thu gọn sidebar trên màn hình điện thoại để phóng to dashboard
     try {
-      if (window.innerWidth < 768 || localStorage.getItem('soc_sidebar_collapsed') === '1') {
+      if (localStorage.getItem('soc_sidebar_collapsed') === '1') {
         const sb = document.getElementById('leftSidebar');
         if (sb) sb.classList.add('sidebar-collapsed');
       }
