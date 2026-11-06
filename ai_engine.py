@@ -345,20 +345,15 @@ async def receive_windows_metrics(request: Request):
             add_incident("red", "QUÁ TẢI TÀI NGUYÊN", f"CPU: {cpu_val:.1f}% | RAM: {ram_val:.1f}%", f"Máy trạm {client_ip} vượt ngưỡng an toàn ({trigger_detail})")
             log_alert_to_es(f"Quá tải CPU/RAM ({cpu_val:.1f}%)", "tien0", client_ip, "CRITICAL")
 
-            # 1. CHỈ GỌI ĐIỆN THOẠI KHI CPU QUÁ TẢI MỨC ĐỎ NGUY CẤP (>= 95%)
-            # GỌI ĐIỆN THOẠI KHI CPU QUÁ TẢI NGUY CẤP (>= 95%) HOẶC BẤM NÚT TEST (ngưỡng <= 10%)
-            if cpu_val >= 95.0 or CONFIG.get("cpu_threshold", 85) <= 10.0:
-                generate_ai_voice(
-                    f"Quá tải CPU {cpu_val:.0f}%",
-                    f"Cảnh báo khẩn cấp! Máy trạm Windows địa chỉ IP {client_ip} đang bị quá tải tài nguyên! CPU {cpu_val:.0f} phần trăm, RAM {ram_val:.0f} phần trăm. Đề nghị kỹ sư trực ban kiểm tra ngay!"
-                )
+            # 1. Khong kich hoat cuoc goi dien thoai cho Qua tai CPU/RAM (theo yeu cau van hanh)
+            # Cuoc goi khan cap chi danh rieng cho cac su co an ninh nguy cap (Brute-force, WAF RCE, DB Drop/Tat log)
 
-            # 2. Báo Telegram
+            # 2. Bao Telegram & Menu phan ung SOAR
             sys_msg = (
                 f"🚨 <b>[SME SOC - MÁY TRẠM QUÁ TẢI]</b> 🚨\n"
                 f"💻 IP: <code>{client_ip}</code>\n"
                 f"🔥 CPU: <b>{cpu_val:.1f}%</b> (Ngưỡng {CONFIG['cpu_threshold']}%) | 💾 RAM: <b>{ram_val:.1f}%</b> (Ngưỡng {CONFIG['ram_threshold']}%)\n"
-                f"⚠️ Kích hoạt chuông gọi nội bộ & Báo động tới kỹ sư trực ban!\n"
+                f"⚠️ Đã ghi nhận cảnh báo tài nguyên & gửi menu phản ứng SOAR tới kỹ sư trực ban!\n"
                 f"⏱ <i>{_now_str()}</i>"
             )
             send_telegram(sys_msg, thread_id=TOPIC_SYSTEM_ID)

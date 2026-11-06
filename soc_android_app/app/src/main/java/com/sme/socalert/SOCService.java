@@ -139,15 +139,23 @@ public class SOCService extends Service {
                         long alertTimestamp = (long) json.optDouble("timestamp", 0);
                         long nowSec = System.currentTimeMillis() / 1000;
 
+                        boolean isCpuRam = title.toLowerCase().contains("cpu")
+                                || title.toLowerCase().contains("ram")
+                                || text.toLowerCase().contains("cpu")
+                                || text.toLowerCase().contains("ram")
+                                || title.toLowerCase().contains("quá tải");
+
                         if (lastHandledAlertId == 0) {
                             lastHandledAlertId = alertId;
-                            // Nếu sự cố vừa mới phát sinh trong vòng 12 giây trước khi mở app, vẫn gọi chuông ngay!
-                            if (alertId > 0 && Math.abs(nowSec - alertTimestamp) <= 12) {
+                            // Nếu sự cố vừa mới phát sinh trong vòng 12 giây trước khi mở app, vẫn gọi chuông ngay (trừ khi là quá tải CPU/RAM)!
+                            if (alertId > 0 && Math.abs(nowSec - alertTimestamp) <= 12 && !isCpuRam) {
                                 triggerEmergencyCall(title, text, serverUrl);
                             }
                         } else if (alertId > lastHandledAlertId) {
                             lastHandledAlertId = alertId;
-                            triggerEmergencyCall(title, text, serverUrl);
+                            if (!isCpuRam) {
+                                triggerEmergencyCall(title, text, serverUrl);
+                            }
                         }
                     }
                     conn.disconnect();
