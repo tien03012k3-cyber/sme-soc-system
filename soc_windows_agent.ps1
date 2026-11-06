@@ -162,8 +162,31 @@ while ($true) {
         $ram = [math]::Round((1 - ($os.FreePhysicalMemory / $os.TotalVisibleMemorySize)) * 100)
         $proc = Get-CimInstance Win32_Processor | Select-Object -First 1
         $cpu = if ($proc.LoadPercentage) { [int]$proc.LoadPercentage } else { 15 }
-        
-        $metricsPayload = @{ cpu = [int]$cpu; ram = [int]$ram }
+
+        # 3. Kiem tra su kien go sai mat khau Windows Event ID 4625 (Brute-Force MITRE T1110)
+        $failedCount = 0
+        $targetUser = "tien0"
+        $sourceIp = "192.168.21.105"
+        try {
+            $cutoff = (Get-Date).AddMinutes(-5)
+            $events = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625; StartTime=$cutoff} -MaxEvents 20 -ErrorAction SilentlyContinue
+            if ($events) {
+                $failedCount = $events.Count
+                $xml = [xml]$events[0].ToXml()
+                $u = ($xml.Event.EventData.Data | Where-Object { $_.Name -eq 'TargetUserName' }).'#text'
+                $ip = ($xml.Event.EventData.Data | Where-Object { $_.Name -eq 'IpAddress' }).'#text'
+                if ($u -and $u -ne "-") { $targetUser = $u }
+                if ($ip -and $ip -ne "-" -and $ip -ne "127.0.0.1" -and $ip -ne "::1") { $sourceIp = $ip }
+            }
+        } catch {}
+
+        $metricsPayload = @{ 
+            cpu = [int]$cpu; 
+            ram = [int]$ram;
+            failed_logins = [int]$failedCount;
+            last_failed_user = $targetUser;
+            last_failed_ip = $sourceIp
+        }
         $resp = Send-SocJson $METRICS_URL $metricsPayload
         
         if ($resp) {
@@ -209,6 +232,37 @@ while ($true) {
                         if ($seenFiles.ContainsKey($delP)) { $seenFiles.Remove($delP) }
                         $deletedCount++
                     }
+                }
+            }
+
+            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Khoa User)
+            if ($resp.brute_action -and $resp.brute_action -ne "none") {
+                $bAct = $resp.brute_action
+                $bIp = $resp.brute_target_ip
+                $bUser = $resp.brute_target_user
+
+                if ($bAct -eq "block_ip" -and $bIp) {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh CHAN IP FIREWALL: $bIp (MITRE M1037)" -ForegroundColor Red
+                    $ruleName = "SOC_SOAR_BLOCK_$bIp"
+                    netsh advfirewall firewall delete rule name="$ruleName" >nul 2>nul
+                    netsh advfirewall firewall add rule name="$ruleName" dir=in action=block remoteip="$bIp" >nul 2>nul
+                    Write-Host "[+] [SOAR THUC THI] DA CHAN IP $bIp TREN WINDOWS FIREWALL THANH CONG!" -ForegroundColor Green
+                }
+                elseif ($bAct -eq "lock_user" -and $bUser) {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh TAM KHOA TAI KHOAN: $bUser (MITRE M1036)" -ForegroundColor Red
+                    net user "$bUser" /active:no >nul 2>nul
+                    Write-Host "[+] [SOAR THUC THI] DA TAM KHOA TAI KHOAN $bUser TREN MAY TRAM!" -ForegroundColor Green
+                }
+                elseif ($bAct -eq "unlock_user" -and $bUser) {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh MO KHOA TAI KHOAN: $bUser" -ForegroundColor Green
+                    net user "$bUser" /active:yes >nul 2>nul
+                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG!" -ForegroundColor Green
+                }
+                elseif ($bAct -eq "unblock_ip" -and $bIp) {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh BO CHAN IP FIREWALL: $bIp" -ForegroundColor Green
+                    $ruleName = "SOC_SOAR_BLOCK_$bIp"
+                    netsh advfirewall firewall delete rule name="$ruleName" >nul 2>nul
+                    Write-Host "[+] [SOAR THUC THI] DA BO CHAN IP $bIp TREN FIREWALL!" -ForegroundColor Green
                 }
             }
         }
