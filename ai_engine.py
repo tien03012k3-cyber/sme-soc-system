@@ -237,6 +237,8 @@ KNOWN_CVE_DB = [
     }
 ]
 
+CVE_REMEDIATION_COMMAND = {'action': 'none', 'target_file': ''}
+
 LATEST_CVE_AUDIT = {
     "last_scanned": None,
     "client_ip": "Chưa quét",
@@ -565,8 +567,22 @@ async def receive_windows_metrics(request: Request):
             rec_msg = f"✅ <b>[MÁY TRẠM ĐÃ HẠ TẢI AN TOÀN]</b> CPU: {cpu_val:.1f}%, RAM: {ram_val:.1f}%"
             send_telegram(rec_msg, thread_id=TOPIC_SYSTEM_ID)
 
+    global CVE_REMEDIATION_COMMAND
+    cve_act = "none"
+    cve_target = ""
+    with _lock:
+        if CVE_REMEDIATION_COMMAND.get("action") == "delete_file":
+            cve_act = "delete_file"
+            cve_target = CVE_REMEDIATION_COMMAND.get("target_file", "")
+            CVE_REMEDIATION_COMMAND["action"] = "none"
+
     return {
-            "tunnel_url": get_current_tunnel_url(),"status": "ok", "action": cmd_action}
+        "tunnel_url": get_current_tunnel_url(),
+        "status": "ok",
+        "action": cmd_action,
+        "cve_action": cve_act,
+        "target_file": cve_target
+    }
 
 @app.get("/manifest.json")
 def get_manifest():
@@ -710,6 +726,45 @@ async def update_config(req: Request):
             if k in body:
                 CONFIG[k] = float(body[k]) if "threshold" in k and k != "auth_fail_threshold" else int(body[k])
     return {"status": "ok", "config": CONFIG}
+
+
+@app.post("/api/cve/remediate")
+async def handle_cve_remediate(req: Request):
+    global CVE_REMEDIATION_COMMAND, LATEST_CVE_AUDIT
+    body = await req.json()
+    action = body.get("action", "delete_file")
+    target_file = body.get("target_file", "")
+    app_name = body.get("app_name", "")
+
+    with _lock:
+        CVE_REMEDIATION_COMMAND = {
+            "action": "delete_file",
+            "target_file": target_file,
+            "time": _now_str()
+        }
+        # Cập nhật danh sách loại bỏ lỗ hổng đã xóa
+        new_vulns = [v for v in LATEST_CVE_AUDIT.get("vulnerabilities", []) if target_file not in v.get("app", "")]
+        LATEST_CVE_AUDIT["vulnerabilities"] = new_vulns
+        LATEST_CVE_AUDIT["vulnerabilities_found"] = len(new_vulns)
+        stats = LATEST_CVE_AUDIT.get("stats", {})
+        if stats.get("high", 0) > 0: stats["high"] -= 1
+        stats["safe"] = stats.get("safe", 0) + 1
+        LATEST_CVE_AUDIT["stats"] = stats
+
+    add_incident("white", "SOAR REMEDIATION", f"SOAR: Đã phát lệnh xóa cách ly tệp độc hại {target_file}", f"Đã tiêu hủy tệp tải về dính CVE trên máy trạm 192.168.21.153")
+    log_alert_to_es(f"SOAR Remediation: {target_file}", "tien0", "192.168.21.153", "HIGH")
+
+    msg = (
+        f"⚡ <b>[SOAR THỰC THI THÀNH CÔNG]</b> ⚡\n\n"
+        f"🎯 <b>Hành động:</b> Cách ly & Xóa file độc hại từ xa\n"
+        f"📦 <b>Tệp bị tiêu hủy:</b> <code>{target_file}</code>\n"
+        f"💻 <b>Máy trạm đích:</b> <code>192.168.21.153</code> (NGUYENVANTIEN)\n"
+        f"✅ <b>Trạng thái:</b> Lệnh đã chuyển giao tới Agent máy ảo để xử lý ngay lập tức!\n"
+        f"⏱ <i>{_now_str()}</i>"
+    )
+    send_telegram(msg, thread_id=TOPIC_SYSTEM_ID)
+
+    return {"status": "ok", "msg": f"Đã phát lệnh SOAR tiêu hủy tệp {target_file} trên máy trạm!"}
 
 
 @app.post("/api/cve/report")
@@ -2298,6 +2353,7 @@ def dashboard_html():
                 <th class="p-3">Mức độ</th>
                 <th class="p-3">Mô tả lỗ hổng</th>
                 <th class="p-3">Khuyến nghị khắc phục (Remediation)</th>
+                <th class="p-3 text-center">Hành động SOAR</th>
               </tr>
             </thead>
             <tbody id="cve-vuln-tbody" class="divide-y divide-[#1c2637] font-mono text-[11px]">
@@ -2682,6 +2738,13 @@ def dashboard_html():
               const sevBadge = isCrit
                 ? '<span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold border border-red-800">CRITICAL</span>'
                 : '<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-400 font-bold border border-amber-800">HIGH</span>';
+              const isFile = v.app.indexOf('Tep tai ve:') !== -1 || v.app.indexOf('.exe') !== -1;
+              const actionBtn = isFile
+                ? `<button onclick="remediateCveFile('${v.app}')" class="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] shadow-md shadow-red-600/30 flex items-center gap-1 mx-auto transition">
+                    <span>🗑️</span> Xóa Tệp Cách Ly
+                   </button>`
+                : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">Cập nhật thủ công</span>`;
+
               return `<tr>
                 <td class="p-3 font-bold text-white font-sans">${v.app}</td>
                 <td class="p-3 text-cyan-400">${v.version}</td>
@@ -2690,6 +2753,7 @@ def dashboard_html():
                 <td class="p-3">${sevBadge}</td>
                 <td class="p-3 text-slate-300 font-sans text-xs max-w-xs">${v.description}</td>
                 <td class="p-3 text-emerald-400 font-sans text-xs">${v.recommendation}</td>
+                <td class="p-3 text-center">${actionBtn}</td>
               </tr>`;
             }).join('');
           } else if (data.total_apps > 0) {
@@ -2715,6 +2779,29 @@ def dashboard_html():
           }
         })
         .catch(err => console.error('Error fetching CVE status:', err));
+    }
+
+    
+    function remediateCveFile(appName) {
+      if (!confirm('Bạn có chắc muốn kích hoạt SOAR để TIÊU HỦY tệp độc hại này khỏi máy trạm từ xa không?')) return;
+      
+      let filename = 'winrar-x64-622.exe';
+      const m = appName.match(/Tep tai ve:\s*([^\)]+)/i);
+      if (m) {
+        filename = m[1].trim();
+      }
+
+      fetch('/api/cve/remediate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_file', target_file: filename, app_name: appName })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert('⚡ ' + (data.msg || 'Đã phát lệnh SOAR xóa tệp từ xa!'));
+        fetchCveStatus();
+      })
+      .catch(err => alert('Lỗi thực thi SOAR: ' + err));
     }
 
     function triggerCveDemo() {
