@@ -616,6 +616,8 @@ async def receive_windows_metrics(request: Request):
     global CVE_REMEDIATION_COMMAND, BRUTE_FORCE_COMMAND, BRUTE_FORCE_INCIDENT
     failed_logins = int(payload.get("failed_logins", 0))
     failed_user = payload.get("last_failed_user", "tien0")
+    if failed_user.replace("$", "").strip().upper() in ["NGUYENVANTIEN", "WIN-KETOAN", ""]:
+        failed_user = "tien0"
     failed_ip = payload.get("last_failed_ip", "192.168.21.105")
 
     if failed_logins >= CONFIG.get("auth_fail_threshold", 2):
@@ -921,6 +923,8 @@ async def handle_brute_force_remediate(req: Request):
     action = body.get("action", "")
     target_ip = body.get("target_ip", BRUTE_FORCE_INCIDENT.get("attacker_ip", "192.168.21.105"))
     target_user = body.get("target_user", BRUTE_FORCE_INCIDENT.get("target_user", "tien0"))
+    if target_user.replace("$", "").strip().upper() in ["NGUYENVANTIEN", "WIN-KETOAN", ""]:
+        target_user = "tien0"
 
     with _lock:
         BRUTE_FORCE_COMMAND = {
@@ -1071,7 +1075,9 @@ def check_auth_logs():
 
     for (u, ip), cnt in fail_counts.items():
         if cnt >= CONFIG["auth_fail_threshold"]:
-            clean_u = u.replace("$", "") if u else "tien0"
+            clean_u = u.replace("$", "").strip() if u else "tien0"
+            if clean_u.upper() in ["NGUYENVANTIEN", "WIN-KETOAN", ""]:
+                clean_u = "tien0"
             with _lock:
                 BRUTE_FORCE_INCIDENT["active"] = True
                 BRUTE_FORCE_INCIDENT["hostname"] = "NGUYENVANTIEN"

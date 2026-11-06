@@ -240,6 +240,10 @@ while ($true) {
                 $bAct = $resp.brute_action
                 $bIp = $resp.brute_target_ip
                 $bUser = $resp.brute_target_user
+                # Chuan hoa ten User thuc te (neu nhan NGUYENVANTIEN thi tu doi ve tien0)
+                if (-not $bUser -or $bUser -eq "NGUYENVANTIEN" -or $bUser -like "*$") {
+                    $bUser = if ($env:USERNAME) { $env:USERNAME } else { "tien0" }
+                }
 
                 if ($bAct -eq "block_ip" -and $bIp) {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh CHAN IP FIREWALL: $bIp (MITRE M1037)" -ForegroundColor Red
@@ -248,15 +252,22 @@ while ($true) {
                     netsh advfirewall firewall add rule name="$ruleName" dir=in action=block remoteip="$bIp" >nul 2>nul
                     Write-Host "[+] [SOAR THUC THI] DA CHAN IP $bIp TREN WINDOWS FIREWALL THANH CONG!" -ForegroundColor Green
                 }
-                elseif ($bAct -eq "lock_user" -and $bUser) {
+                elseif ($bAct -eq "lock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh TAM KHOA TAI KHOAN: $bUser (MITRE M1036)" -ForegroundColor Red
+                    # 1. Vo hieu hoa tai khoan
                     net user "$bUser" /active:no >nul 2>nul
-                    Write-Host "[+] [SOAR THUC THI] DA TAM KHOA TAI KHOAN $bUser TREN MAY TRAM!" -ForegroundColor Green
+                    Disable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
+                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN: $bUser (Active: No)!" -ForegroundColor Green
+                    
+                    # 2. Ngay lap tuc khoa man hinh (Lock Workstation) de tong co nguoi dung ra ngoai man hinh dang nhap
+                    Write-Host "[+] [SOAR THUC THI] DANG KHOA MAN HINH DE NGAN CHAN TRUY CAP..." -ForegroundColor Yellow
+                    rundll32.exe user32.dll,LockWorkStation
                 }
-                elseif ($bAct -eq "unlock_user" -and $bUser) {
+                elseif ($bAct -eq "unlock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh MO KHOA TAI KHOAN: $bUser" -ForegroundColor Green
                     net user "$bUser" /active:yes >nul 2>nul
-                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG!" -ForegroundColor Green
+                    Enable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
+                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG (Active: Yes)!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unblock_ip" -and $bIp) {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh BO CHAN IP FIREWALL: $bIp" -ForegroundColor Green
