@@ -1028,7 +1028,7 @@ def dashboard_html():
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SME SOC Command Center - Enterprise Security Dashboard</title>
+  <title>SME SOC Command Center - Enterprise Multi-Module Defense</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -1041,15 +1041,14 @@ def dashboard_html():
     }
 
     .nav-item-active {
-      background-color: #1e293b;
-      color: #38bdf8;
-      border-left: 3px solid #0284c7;
+      background-color: #1e293b !important;
+      color: #38bdf8 !important;
+      border-left: 3px solid #0284c7 !important;
     }
 
     /* TOOLTIP HOVER ENGINE */
     .has-tooltip {
       position: relative;
-      cursor: help;
     }
     .has-tooltip:hover .tooltip-box {
       opacity: 1;
@@ -1102,22 +1101,22 @@ def dashboard_html():
   <aside class="w-64 bg-[#0e1420] border-r border-[#1a2333] flex flex-col shrink-0 select-none hidden md:flex">
     
     <!-- Brand / Logo -->
-    <div class="h-14 flex items-center px-5 border-b border-[#1a2333] gap-2.5 has-tooltip">
+    <div class="h-14 flex items-center px-5 border-b border-[#1a2333] gap-2.5 has-tooltip cursor-pointer" onclick="switchTab('dashboard')">
       <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-cyan-500/20">
         🛡️
       </div>
       <div>
         <span class="font-bold text-sm tracking-wide text-white block">SME DEFENSE SOC</span>
-        <span class="text-[10px] text-cyan-400">Rê chuột xem chú thích</span>
+        <span class="text-[10px] text-cyan-400">Bấm từng mục để đổi trang</span>
       </div>
 
       <div class="tooltip-box tip-right">
-        <strong class="text-cyan-400 block mb-1">🏢 SOC (Security Operations Center) là gì?</strong>
-        Là <strong>"Trung tâm tác chiến an ninh mạng"</strong>. Nơi theo dõi máy chủ, cơ sở dữ liệu MySQL, máy tính nhân viên để bắt quả tang hacker và ngăn chặn phá hoại.
+        <strong class="text-cyan-400 block mb-1">🏢 SOC (Security Operations Center)</strong>
+        Bấm vào từng danh mục bên dưới để chuyển đổi giữa các màn hình giám sát chuyên sâu!
       </div>
     </div>
 
-    <!-- Navigation Menu with Tooltips -->
+    <!-- Navigation Menu with Interactive Tab Switching -->
     <div class="flex-1 overflow-y-auto py-3 space-y-1">
       <div>
         <div class="flex items-center justify-between px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white cursor-pointer transition has-tooltip">
@@ -1125,80 +1124,83 @@ def dashboard_html():
             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             Asset Management
           </span>
-          <svg class="w-3.5 h-3.5 text-slate-500 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           <div class="tooltip-box tip-right">
             <strong class="text-cyan-400 block mb-1">💻 Quản lý tài sản (Asset Management)</strong>
-            Điểm danh mọi thiết bị trong mạng doanh nghiệp: Máy chủ Ubuntu, trạm Windows, điện thoại người trực ban và cloud VPS.
+            Bấm vào các mục con bên dưới để xem từng phân hệ chi tiết!
           </div>
         </div>
 
         <div class="space-y-0.5 text-xs">
-          <a href="#" class="nav-item-active flex items-center px-9 py-1.5 text-white font-medium has-tooltip">
+          <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn nav-item-active w-full text-left flex items-center px-9 py-1.5 text-white font-medium has-tooltip">
             Dashboard
             <div class="tooltip-box tip-right">
               <strong class="text-cyan-400 block mb-1">📊 Bảng điều khiển (Dashboard)</strong>
-              Màn hình tổng quan tập trung toàn bộ dữ liệu an ninh, rủi ro và các nút tác chiến nhanh.
+              Màn hình tổng quan 6 thẻ rủi ro, tickets và các nút bấm tác chiến.
             </div>
-          </a>
-          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
-            USB Firewall
-            <div class="tooltip-box tip-right">
-              <strong class="text-cyan-400 block mb-1">🔌 Chặn USB chứa mã độc</strong>
-              Giám sát cấm cắm USB lạ đánh cắp dữ liệu công ty.
-            </div>
-          </a>
-          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+          </button>
+          
+          <button onclick="switchTab('hosts')" id="btn-hosts" class="nav-btn w-full text-left flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
             Hosts / Assets
             <div class="tooltip-box tip-right">
-              <strong class="text-cyan-400 block mb-1">🖥️ Danh sách máy chủ</strong>
-              Ubuntu Host (192.168.21.136), trạm Windows 10 và Azure VPS (70.153.83.137).
+              <strong class="text-cyan-400 block mb-1">🖥️ Danh sách máy chủ chi tiết</strong>
+              Bấm vào để xem thông số chi tiết máy Ubuntu, Windows và Azure VPS!
             </div>
-          </a>
-          <a href="#" class="flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+          </button>
+
+          <button onclick="switchTab('usb')" id="btn-usb" class="nav-btn w-full text-left flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
+            USB Firewall
+            <div class="tooltip-box tip-right">
+              <strong class="text-cyan-400 block mb-1">🔌 Tường lửa kiểm soát USB</strong>
+              Bấm vào để xem các thiết bị USB được phép hoặc bị cấm cắm vào máy.
+            </div>
+          </button>
+
+          <button onclick="switchTab('software')" id="btn-software" class="nav-btn w-full text-left flex items-center px-9 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/40 transition has-tooltip">
             Software Inventory
             <div class="tooltip-box tip-right">
               <strong class="text-cyan-400 block mb-1">📦 Danh mục phần mềm</strong>
-              Kiểm tra các phần mềm đang chạy trên máy tính nhân viên.
+              Bấm vào để xem các dịch vụ và phần mềm cài trên hệ thống (MySQL, Python, Nginx...).
             </div>
-          </a>
+          </button>
         </div>
       </div>
 
       <div class="pt-2 border-t border-[#1a2333]/60 space-y-1 text-xs">
-        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+        <button onclick="switchTab('siem')" id="btn-siem" class="nav-btn w-full text-left flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
           <span class="flex items-center gap-2.5">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             SIEM & Audit Logs
           </span>
+          <span id="siemBadgeCount" class="px-1.5 py-0.2 rounded-full text-[10px] bg-red-600 text-white font-bold">0</span>
           <div class="tooltip-box tip-right">
-            <strong class="text-cyan-400 block mb-1">📜 SIEM (Nhật ký sự kiện)</strong>
-            "Hộp đen" an ninh ghi nhận mọi câu lệnh MySQL và lịch sử đăng nhập.
+            <strong class="text-cyan-400 block mb-1">📜 SIEM & Hộp Đen Kiểm Toán</strong>
+            Bấm vào để xem toàn bộ bảng nhật ký tấn công, lệnh DROP DB và lọc theo cấp độ!
           </div>
-        </div>
+        </button>
 
-        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+        <button onclick="switchTab('incidents')" id="btn-incidents" class="nav-btn w-full text-left flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
           <span class="flex items-center gap-2.5">
             <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             Incident Response
           </span>
           <div class="tooltip-box tip-right">
-            <strong class="text-cyan-400 block mb-1">🚨 Phản ứng sự cố</strong>
-            Tự động kích hoạt chuông báo động cuộc gọi và đọc giọng AI khi có nguy cấp.
+            <strong class="text-cyan-400 block mb-1">🚨 Trung tâm Ứng cứu Khẩn cấp</strong>
+            Bấm vào để nghe giọng đọc AI, kích hoạt gọi điện và thực thi kịch bản SOAR!
           </div>
-        </div>
+        </button>
 
-        <div class="flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
+        <button onclick="switchTab('tunnel')" id="btn-tunnel" class="nav-btn w-full text-left flex items-center justify-between px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800/30 transition has-tooltip">
           <span class="flex items-center gap-2.5">
             <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             Reverse Tunnel Mesh
           </span>
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <div class="tooltip-box tip-right">
-            <strong class="text-cyan-400 block mb-1">🌐 Đường ống Reverse Tunnel</strong>
-            Nối an toàn từ máy nội bộ lên Azure VPS (70.153.83.137) để phát sóng 24/7.
+            <strong class="text-cyan-400 block mb-1">🌐 Sơ đồ Reverse Tunnel Mesh</strong>
+            Bấm vào để xem bản đồ mạng trực quan nối từ Ubuntu ở nhà lên Azure VPS 24/7!
           </div>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -1234,7 +1236,7 @@ def dashboard_html():
         </div>
 
         <div class="relative has-tooltip">
-          <select id="assetFilter" class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
+          <select id="assetFilter" onchange="handleAssetFilter(this.value)" class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
             <option value="all">Tất cả máy (Ubuntu + Win10 + VPS)</option>
             <option value="ubuntu">Ubuntu SOC Host (192.168.21.136)</option>
             <option value="win10">Windows Station (192.168.21.153)</option>
@@ -1243,7 +1245,7 @@ def dashboard_html():
           <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           <div class="tooltip-box tip-bottom">
             <strong class="text-cyan-400 block mb-1">🖥️ Lọc theo Từng máy</strong>
-            Xem riêng chi tiết máy chủ cơ sở dữ liệu hoặc máy trạm người dùng.
+            Lọc sự cố riêng của từng máy chủ hoặc máy trạm.
           </div>
         </div>
 
@@ -1253,8 +1255,8 @@ def dashboard_html():
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </button>
           <div class="tooltip-box tip-bottom">
-            <strong class="text-cyan-400 block mb-1">🔄 Làm mới dữ liệu thời gian thực</strong>
-            Hệ thống tự động quét và cập nhật mỗi 2.5 giây. Bấm nút này để ép tải lại tức thì.
+            <strong class="text-cyan-400 block mb-1">🔄 Tự động cập nhật mỗi 2.5s</strong>
+            Bấm vào để tải lại dữ liệu mới nhất tức thì.
           </div>
         </div>
       </div>
@@ -1266,8 +1268,8 @@ def dashboard_html():
             Đang bật Chú thích
           </span>
           <div class="tooltip-box tip-bottom">
-            <strong class="text-cyan-400 block mb-1">💡 Chế độ Hướng dẫn & Giải thích</strong>
-            Rê chuột vào bất kỳ thành phần nào trên màn hình để xem giải thích dễ hiểu!
+            <strong class="text-cyan-400 block mb-1">💡 Rê chuột để xem chú thích</strong>
+            Bất kỳ mục nào ní chưa hiểu, rê chuột vào sẽ hiện giải thích bình dân ngay lập tức!
           </div>
         </div>
 
@@ -1284,8 +1286,8 @@ def dashboard_html():
       </div>
     </header>
 
-    <!-- CONTENT GRID (3 COLUMNS X 2 ROWS = 6 CARDS) -->
-    <main class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- TAB 1: DASHBOARD VIEW (6-GRID) -->
+    <div id="view-dashboard" class="tab-content p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 
       <!-- CARD 1: FLEET RISK SCORES & TIMELINE -->
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
@@ -1307,7 +1309,6 @@ def dashboard_html():
             </span>
           </div>
 
-          <!-- Gauge Indicator -->
           <div class="mt-4 mb-2">
             <div class="flex justify-between text-[11px] font-bold text-slate-400 mb-1 px-1">
               <span>0 (An toàn)</span>
@@ -1327,7 +1328,7 @@ def dashboard_html():
         <div class="mt-6">
           <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
             <span class="font-semibold text-slate-300">Biểu đồ sự cố theo thời gian (Timeline 24h)</span>
-            <span class="text-[11px] text-red-400 font-bold" id="peakTimeText">Gần nhất: 17:15</span>
+            <span class="text-[11px] text-red-400 font-bold" id="peakTimeText">Đỉnh điểm: 17:15</span>
           </div>
           <div class="h-28 w-full bg-[#0a0f18] rounded-lg p-2 border border-[#1c2637] relative flex items-end">
             <svg class="w-full h-full overflow-visible" viewBox="0 0 300 80" preserveAspectRatio="none">
@@ -1356,16 +1357,13 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">🎫 THẺ 2: TICKETS (PHIẾU BÁO ÁN SỰ CỐ)</strong>
-          * Mỗi vụ việc phá hoại đều sinh ra 1 Ticket.<br>
-          * <strong>Total:</strong> Tổng số vụ.<br>
-          * <strong>Open:</strong> Sự cố đỏ khẩn cấp chưa khắc phục.<br>
-          * <strong>Processing:</strong> Sự cố đang được AI phân tích.
+          * Bấm vào chữ "Xem tất cả" hoặc menu bên trái để mở toàn bộ hồ sơ vụ án!
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Tickets & Alerts Overview</h3>
-            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            <button onclick="switchTab('siem')" class="text-xs text-cyan-400 hover:underline">Xem tất cả →</button>
           </div>
 
           <div class="grid grid-cols-4 gap-2 mb-4 text-center">
@@ -1396,7 +1394,7 @@ def dashboard_html():
           </div>
 
           <div class="space-y-2 text-xs">
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Danh sách sự cố thời gian thực:</span>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Danh sách sự cố vừa bắt quả tang:</span>
             <div id="latestTicketsList" class="space-y-2">
               <div class="text-slate-500 text-center py-4">Đang tải dữ liệu từ máy chủ...</div>
             </div>
@@ -1404,8 +1402,7 @@ def dashboard_html():
         </div>
 
         <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">Trang 1</span>
-          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">Trang 2</span>
+          <button onclick="switchTab('siem')" class="text-cyan-400 hover:underline">Mở toàn bộ danh sách SIEM Logs →</button>
         </div>
       </div>
 
@@ -1413,15 +1410,13 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">🏆 THẺ 3: XẾP HẠNG MÁY CHỦ BỊ TẤN CÔNG</strong>
-          * <strong>Ubuntu-SOC-Host (Chứa MySQL):</strong> Đang bị đe dọa cao nhất vì chứa dữ liệu quan trọng.<br>
-          * <strong>Win10-Agent-PC:</strong> Máy trạm người dùng.<br>
-          * <strong>Azure-VPS-Tunnel:</strong> Cầu nối đám mây an toàn tuyệt đối.
+          * Bấm "Chi tiết máy" để xem cấu hình chi tiết từng máy!
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Host & Asset Status</h3>
-            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            <button onclick="switchTab('hosts')" class="text-xs text-cyan-400 hover:underline">Chi tiết máy →</button>
           </div>
 
           <div class="flex justify-around items-center py-2 bg-[#0b1019] rounded-lg border border-[#1c2637] mb-4">
@@ -1443,7 +1438,7 @@ def dashboard_html():
 
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Bảng phong thần nguy cơ:</span>
           <div class="space-y-2 text-xs">
-            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637] cursor-pointer hover:border-cyan-500 transition" onclick="switchTab('hosts')">
               <div class="flex items-center gap-2">
                 <span class="text-amber-400">🔒</span>
                 <div>
@@ -1457,7 +1452,7 @@ def dashboard_html():
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637] cursor-pointer hover:border-cyan-500 transition" onclick="switchTab('hosts')">
               <div class="flex items-center gap-2">
                 <span class="text-blue-400">💻</span>
                 <div>
@@ -1471,7 +1466,7 @@ def dashboard_html():
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637]">
+            <div class="flex items-center justify-between p-2 rounded bg-[#0e1522] border border-[#1c2637] cursor-pointer hover:border-cyan-500 transition" onclick="switchTab('tunnel')">
               <div class="flex items-center gap-2">
                 <span class="text-emerald-400">☁️</span>
                 <div>
@@ -1488,8 +1483,7 @@ def dashboard_html():
         </div>
 
         <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
-          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+          <button onclick="switchTab('hosts')" class="text-cyan-400 hover:underline">Quản lý toàn bộ 3 máy chủ →</button>
         </div>
       </div>
 
@@ -1497,14 +1491,13 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">🌐 THẺ 4: CÁC THIẾT BỊ ĐANG CẮM TRONG MẠNG</strong>
-          * Cho ní biết toàn bộ đường đi nước bước trong mạng LAN và Internet.<br>
-          * Cổng Router Gateway, Máy chủ AI Engine, và chiếc điện thoại Android đang chạy App SOC Alert.
+          * Bấm "Xem sơ đồ Tunnel" để xem đường dây nối lên đám mây Azure!
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">Connected Devices in Subnet</h3>
-            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            <button onclick="switchTab('tunnel')" class="text-xs text-cyan-400 hover:underline">Sơ đồ mạng →</button>
           </div>
 
           <div class="space-y-2 text-xs">
@@ -1538,8 +1531,7 @@ def dashboard_html():
         </div>
 
         <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
-          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+          <button onclick="switchTab('tunnel')" class="text-cyan-400 hover:underline">Mở bản đồ kết nối Reverse Tunnel →</button>
         </div>
       </div>
 
@@ -1547,9 +1539,7 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">🗄️ THẺ 5: KIỂM TOÁN CƠ SỞ DỮ LIỆU MYSQL</strong>
-          * Điểm sáng nhất đồ án của ní: Bắt tận tay hacker khi gõ lệnh phá hoại.<br>
-          * <strong>DROP DATABASE / TABLE:</strong> Xóa bảng mất data khách hàng -> Phạt kịch khung 100 điểm đỏ.<br>
-          * <strong>SET general_log = 'OFF':</strong> Tắt log kiểm toán để trốn tội -> Phạt 94.20 điểm.
+          * Bắt tận tay hacker khi gõ lệnh phá hoại: DROP TABLE, tắt audit log...
         </div>
 
         <div>
@@ -1592,8 +1582,7 @@ def dashboard_html():
         </div>
 
         <div class="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-[#1c2637] text-[11px]">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold cursor-pointer">1</span>
-          <span class="px-2 py-0.5 rounded bg-[#162030] text-slate-400 hover:text-white cursor-pointer">2</span>
+          <button onclick="switchTab('siem')" class="text-cyan-400 hover:underline">Xem toàn bộ lịch sử truy vấn MySQL →</button>
         </div>
       </div>
 
@@ -1601,16 +1590,13 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">⚡ THẺ 6: SOAR (TRUNG TÂM PHẢN ỨNG TỰ ĐỘNG)</strong>
-          * Không chỉ nhìn biểu đồ, mà có các nút bấm thực chiến:<br>
-          * <strong>Nút 1:</strong> Bấm là điện thoại của ní reo chuông khẩn cấp.<br>
-          * <strong>Nút 2:</strong> Nghe giọng nói AI cô Hoài My đọc to sự cố.<br>
-          * <strong>Nút 3:</strong> Khóa ngay phiên làm việc của kẻ gian.
+          * Bấm "Phản ứng sự cố" để mở phòng tác chiến toàn diện!
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">SOAR Automated Actions (Nút tác chiến)</h3>
-            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            <button onclick="switchTab('incidents')" class="text-xs text-cyan-400 hover:underline">Phòng tác chiến →</button>
           </div>
 
           <div class="space-y-2 text-xs">
@@ -1655,25 +1641,348 @@ def dashboard_html():
         </div>
       </div>
 
-    </main>
+    </div>
+
+    <!-- TAB 2: HOSTS / ASSETS VIEW -->
+    <div id="view-hosts" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Quản Lý Chi Tiết Máy Chủ & Thiết Bị (Hosts / Assets)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Danh sách toàn bộ các máy trạm, máy chủ cơ sở dữ liệu và Cloud VPS trong kiến trúc Hybrid Cloud.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Host 1: Ubuntu -->
+        <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🐧</span>
+              <div>
+                <h3 class="font-bold text-white">Ubuntu SOC Core Host</h3>
+                <span class="text-xs font-mono text-cyan-400">192.168.21.136</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Active</span>
+          </div>
+          <div class="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+            <div class="flex justify-between"><span>Hệ điều hành:</span><span class="text-slate-100 font-mono">Ubuntu 24.04 LTS</span></div>
+            <div class="flex justify-between"><span>Dịch vụ SOC:</span><span class="text-emerald-400 font-bold">ai_engine.service</span></div>
+            <div class="flex justify-between"><span>Database:</span><span class="text-cyan-400 font-bold">MySQL 8.0 (Port 3306)</span></div>
+            <div class="flex justify-between"><span>Reverse Bridge:</span><span class="text-emerald-400">soc-tunnel.service</span></div>
+          </div>
+        </div>
+
+        <!-- Host 2: Windows -->
+        <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🪟</span>
+              <div>
+                <h3 class="font-bold text-white">Windows 10 Workstation</h3>
+                <span class="text-xs font-mono text-blue-400">192.168.21.153</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Monitored</span>
+          </div>
+          <div class="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+            <div class="flex justify-between"><span>Vai trò:</span><span class="text-slate-100">Máy trạm kế toán / client</span></div>
+            <div class="flex justify-between"><span>Cơ chế giám sát:</span><span class="text-slate-100">POST /api/windows_metrics</span></div>
+            <div class="flex justify-between"><span>Trạng thái CPU:</span><span class="text-amber-400 font-bold">83.0% (Cảnh báo tải)</span></div>
+            <div class="flex justify-between"><span>RAM tiêu thụ:</span><span class="text-slate-100">76.0%</span></div>
+          </div>
+        </div>
+
+        <!-- Host 3: Azure VPS -->
+        <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">☁️</span>
+              <div>
+                <h3 class="font-bold text-white">Azure Cloud Gateway</h3>
+                <span class="text-xs font-mono text-cyan-400">70.153.83.137</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Cloud 24/7</span>
+          </div>
+          <div class="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+            <div class="flex justify-between"><span>Khu vực (Region):</span><span class="text-slate-100">Indonesia Central</span></div>
+            <div class="flex justify-between"><span>Cấu hình:</span><span class="text-slate-100">Standard_B2ats_v2 (2 vCPU)</span></div>
+            <div class="flex justify-between"><span>Phần mềm tiếp sóng:</span><span class="text-emerald-400 font-bold">Nginx Reverse Proxy</span></div>
+            <div class="flex justify-between"><span>Độ trễ trung bình:</span><span class="text-emerald-400 font-bold">~28 ms</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: REVERSE TUNNEL MESH VIEW -->
+    <div id="view-tunnel" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Sơ Đồ Mạng Reverse Tunnel Mesh (Hybrid Architecture)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Kiến trúc kết nối ngầm mã hóa SSH vượt tường lửa, thay thế hoàn toàn Cloudflare.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <!-- Interactive Network Diagram -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-6">
+        <div class="flex flex-col md:flex-row items-center justify-around gap-6 py-8">
+          
+          <!-- Node 1: On-premise -->
+          <div class="text-center p-4 bg-[#0a0f18] border border-cyan-800/60 rounded-xl w-60 shadow-lg">
+            <div class="text-3xl mb-2">🏠</div>
+            <h4 class="font-bold text-white">Ubuntu On-Premise</h4>
+            <span class="text-xs font-mono text-cyan-400 block">192.168.21.136:8888</span>
+            <span class="text-[10px] text-slate-400 mt-1 block">Chạy AI Engine & MySQL</span>
+            <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">Tunnel Client (Up)</span>
+          </div>
+
+          <!-- Bridge Line -->
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-mono text-emerald-400 font-bold animate-pulse">SSH Reverse Pipe (Port 443/22)</span>
+            <div class="w-32 h-1 bg-gradient-to-r from-cyan-500 via-emerald-400 to-blue-500 my-2 rounded-full"></div>
+            <span class="text-[10px] text-slate-400 font-mono">Ping ~28ms • RSA 2048 Bit</span>
+          </div>
+
+          <!-- Node 2: Cloud VPS -->
+          <div class="text-center p-4 bg-[#0a0f18] border border-blue-800/60 rounded-xl w-60 shadow-lg">
+            <div class="text-3xl mb-2">☁️</div>
+            <h4 class="font-bold text-white">Azure Cloud VPS</h4>
+            <span class="text-xs font-mono text-cyan-400 block">70.153.83.137:80</span>
+            <span class="text-[10px] text-slate-400 mt-1 block">Nginx Edge Reverse Proxy</span>
+            <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-blue-950 text-blue-400 border border-blue-800">Public Gateway</span>
+          </div>
+
+          <!-- 4G Connection -->
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-mono text-purple-400 font-bold">4G / WiFi Internet</span>
+            <div class="w-32 h-1 bg-gradient-to-r from-blue-500 to-purple-500 my-2 rounded-full"></div>
+            <span class="text-[10px] text-slate-400 font-mono">Toàn cầu 24/7</span>
+          </div>
+
+          <!-- Node 3: Mobile -->
+          <div class="text-center p-4 bg-[#0a0f18] border border-purple-800/60 rounded-xl w-60 shadow-lg">
+            <div class="text-3xl mb-2">📱</div>
+            <h4 class="font-bold text-white">Android Mobile SOC</h4>
+            <span class="text-xs font-mono text-purple-400 block">SOC Alert App</span>
+            <span class="text-[10px] text-slate-400 mt-1 block">Đánh thức màn hình khóa & Gọi AI</span>
+            <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-purple-950 text-purple-400 border border-purple-800">Active Receiver</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SIEM & AUDIT LOGS FULL TABLE -->
+    <div id="view-siem" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">SIEM & Hộp Đen Kiểm Toán Sự Kiện An Ninh (Audit Logs)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Nhật ký toàn bộ các hành vi can thiệp hệ cơ sở dữ liệu MySQL và sự cố bất thường.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#0b1019] text-slate-400 uppercase text-[10px] border-b border-slate-800">
+            <tr>
+              <th class="p-3">Thời gian</th>
+              <th class="p-3">Mức độ</th>
+              <th class="p-3">Phân loại</th>
+              <th class="p-3">Tên sự cố</th>
+              <th class="p-3">Chi tiết câu lệnh thực thi</th>
+            </tr>
+          </thead>
+          <tbody id="fullSiemTableBody" class="divide-y divide-[#1c2637] font-mono text-[11px]">
+            <!-- Render dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: INCIDENT RESPONSE & SOAR ACTIONS -->
+    <div id="view-incidents" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Trung Tâm Tác Chiến Ứng Cứu Khẩn Cấp (Incident Response Cockpit)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Thực thi các hành động phản ứng tự động SOAR và phát giọng nói khẩn cấp.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-[#121926] border border-cyan-800/60 rounded-xl p-5 space-y-4">
+          <h3 class="font-bold text-white text-sm">🎙️ Tổng Đài Giọng Nói AI Báo Động (Edge-TTS)</h3>
+          <p class="text-xs text-slate-300">Nội dung âm thanh AI đang lưu trữ sẵn sàng phát:</p>
+          <div class="p-3 rounded bg-black/50 border border-slate-800 text-cyan-300 font-mono text-xs italic" id="voiceFullText">
+            "Cảnh báo an ninh tối khẩn! Phát hiện kẻ xâm nhập đang tìm cách tắt nhật ký kiểm toán để xóa dấu vết!"
+          </div>
+          <div class="flex gap-3">
+            <button onclick="playAiVoiceDemo()" class="flex-1 py-2 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition">🔊 Nghe Giọng Đọc AI Hoài My</button>
+            <button onclick="triggerEmergencyCall()" class="flex-1 py-2 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition">📞 Gọi Điện Báo Động Về App</button>
+          </div>
+        </div>
+
+        <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
+          <h3 class="font-bold text-white text-sm">🛑 Các Kịch Bản Phản Ứng Tự Động (SOAR Containment)</h3>
+          <div class="space-y-2 text-xs">
+            <button onclick="alert('Đã gửi lệnh khóa IP kẻ tấn công vào iptables!')" class="w-full p-2.5 rounded bg-slate-800 hover:bg-slate-700 text-left flex justify-between">
+              <span>🛡️ Chặn IP kẻ tấn công (Block IP)</span>
+              <span class="text-cyan-400">Execute</span>
+            </button>
+            <button onclick="alert('Đã ngắt toàn bộ phiên làm việc của user MySQL vi phạm!')" class="w-full p-2.5 rounded bg-slate-800 hover:bg-slate-700 text-left flex justify-between">
+              <span>🔒 Đóng băng phiên MySQL vi phạm</span>
+              <span class="text-red-400">Kill Session</span>
+            </button>
+            <button onclick="alert('Đã tạo bản sao lưu khẩn cấp an toàn!')" class="w-full p-2.5 rounded bg-slate-800 hover:bg-slate-700 text-left flex justify-between">
+              <span>💾 Sao lưu khẩn cấp Database (Binlog Backup)</span>
+              <span class="text-emerald-400">Backup</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: USB FIREWALL VIEW -->
+    <div id="view-usb" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Tường Lửa Kiểm Soát Cổng USB (USB Peripheral Guard)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Giám sát và ngăn chặn các thiết bị lưu trữ ngoài chứa mã độc cắm vào hệ thống.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs font-bold text-slate-300">Chính sách bảo vệ USB: <strong class="text-emerald-400">BẬT (STRICT ENFORCEMENT)</strong></span>
+          <span class="text-xs text-slate-400">Tự động khóa USB lạ</span>
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded bg-[#0a0f18] border border-slate-800 flex justify-between items-center">
+            <div>
+              <span class="font-bold text-white block">Kingston DataTraveler 32GB</span>
+              <span class="text-slate-400 text-[11px]">Hardware ID: USB\VID_0951&PID_1666 • Đã gán cho Nhân viên Kế toán</span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">Cho Phép (Whitelisted)</span>
+          </div>
+
+          <div class="p-3 rounded bg-[#0a0f18] border border-red-900/40 flex justify-between items-center">
+            <div>
+              <span class="font-bold text-red-300 block">Thiết bị USB không rõ nguồn gốc (Rubber Ducky)</span>
+              <span class="text-slate-400 text-[11px]">Hardware ID: USB\VID_1D50&PID_6089 • Phát hiện cắm lúc 15:10</span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] bg-red-950 text-red-400 border border-red-800 font-bold">ĐÃ CHẶN & CÁCH LY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: SOFTWARE INVENTORY VIEW -->
+    <div id="view-software" class="tab-content p-6 space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white">Danh Mục Phần Mềm & Dịch Vụ Cài Đặt (Software Inventory)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Kiểm kê phiên bản và lỗ hổng của các gói phần mềm đang chạy trên cụm máy chủ.</p>
+        </div>
+        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+      </div>
+
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#0b1019] text-slate-400 uppercase text-[10px] border-b border-slate-800">
+            <tr>
+              <th class="p-3">Tên phần mềm / Dịch vụ</th>
+              <th class="p-3">Phiên bản</th>
+              <th class="p-3">Máy chủ cài đặt</th>
+              <th class="p-3">Trạng thái an ninh</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#1c2637] font-mono text-[11px]">
+            <tr>
+              <td class="p-3 font-bold text-white">MySQL Community Server</td>
+              <td class="p-3 text-slate-300">8.0.39-0ubuntu0.24.04.2</td>
+              <td class="p-3 text-cyan-400">Ubuntu SOC Host (192.168.21.136)</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Audited & Monitored</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-white">Python Runtime</td>
+              <td class="p-3 text-slate-300">3.10.12 (x86_64)</td>
+              <td class="p-3 text-cyan-400">Ubuntu SOC Host</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Secure</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-white">Nginx Web Reverse Proxy</td>
+              <td class="p-3 text-slate-300">1.24.0 (Ubuntu)</td>
+              <td class="p-3 text-blue-400">Azure Cloud VPS (70.153.83.137)</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Hardened</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-white">Microsoft Edge-TTS Engine</td>
+              <td class="p-3 text-slate-300">6.1.18 (Neural Voice)</td>
+              <td class="p-3 text-cyan-400">Ubuntu SOC Host</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 font-bold">Voice Ready</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-white">OpenSSH Server</td>
+              <td class="p-3 text-slate-300">9.6p1 (Ubuntu)</td>
+              <td class="p-3 text-cyan-400">Ubuntu Host & Azure VPS</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Keypair Protected</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <!-- REAL-TIME JAVASCRIPT POLLING & ACTIONS -->
+  <!-- JAVASCRIPT LOGIC (TAB SWITCHING, LIVE DATA POLLING & ACTIONS) -->
   <script>
+    // Tab Switching System
+    function switchTab(tabId) {
+      // Ẩn tất cả view
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      
+      // Hiện view được chọn
+      const target = document.getElementById('view-' + tabId);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+
+      // Đổi class active ở menu
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-item-active'));
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('nav-item-active');
+      }
+    }
+
+    function handleAssetFilter(val) {
+      if (val === 'ubuntu' || val === 'win10' || val === 'azure') {
+        switchTab('hosts');
+      } else {
+        switchTab('dashboard');
+      }
+    }
+
+    // Polling System
     async function fetchStatus() {
       try {
         const res = await fetch('/api/status');
         if (!res.ok) return;
         const data = await res.json();
 
-        // 1. Cập nhật CPU & RAM
+        // 1. CPU & RAM
         if (data.metrics) {
           const cpu = data.metrics.cpu || 0;
           const ram = data.metrics.ram || 0;
           document.getElementById('ubuntuMetricsText').innerText = 'CPU: ' + cpu + '% | RAM: ' + ram + '%';
         }
 
-        // 2. Cập nhật Tickets
+        // 2. Incidents & Tickets
         if (data.incidents && Array.isArray(data.incidents)) {
           const total = data.incidents.length;
           let open = 0, proc = 0;
@@ -1684,8 +1993,9 @@ def dashboard_html():
           document.getElementById('ticketTotal').innerText = total;
           document.getElementById('ticketOpen').innerText = open;
           document.getElementById('ticketProcessing').innerText = proc;
+          document.getElementById('siemBadgeCount').innerText = open;
 
-          // Render 3 incidents mới nhất
+          // Render 3 incidents mới nhất ở thẻ Dashboard
           const container = document.getElementById('latestTicketsList');
           container.innerHTML = '';
           const recents = data.incidents.slice(0, 3);
@@ -1694,7 +2004,7 @@ def dashboard_html():
             const borderCol = isRed ? 'border-red-500' : 'border-amber-500';
             const textCol = isRed ? 'text-red-300' : 'text-amber-300';
             const html = `
-              <div class="p-2 rounded bg-[#0e1522] border-l-2 ${borderCol} flex flex-col gap-0.5">
+              <div class="p-2 rounded bg-[#0e1522] border-l-2 ${borderCol} flex flex-col gap-0.5 cursor-pointer hover:bg-slate-800/40 transition" onclick="switchTab('siem')">
                 <span class="font-bold ${textCol}">${inc.title}</span>
                 <div class="flex items-center gap-2 text-[11px] text-slate-400">
                   <span class="text-slate-300">${inc.details || ''}</span> • <span>${inc.time}</span>
@@ -1704,7 +2014,25 @@ def dashboard_html():
             container.innerHTML += html;
           });
 
-          // Cập nhật điểm nguy cơ
+          // Render bảng Full SIEM logs
+          const fullTable = document.getElementById('fullSiemTableBody');
+          fullTable.innerHTML = '';
+          data.incidents.forEach(inc => {
+            const isRed = inc.color === 'red';
+            const badgeBg = isRed ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800';
+            const row = `
+              <tr class="hover:bg-slate-800/30">
+                <td class="p-3 text-slate-400">${inc.time}</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeBg}">${isRed ? 'CRITICAL' : 'WARNING'}</span></td>
+                <td class="p-3 text-slate-300 font-semibold">${inc.type || 'SECURITY'}</td>
+                <td class="p-3 text-white font-bold">${inc.title}</td>
+                <td class="p-3 text-cyan-300">${inc.details || '-'}</td>
+              </tr>
+            `;
+            fullTable.innerHTML += row;
+          });
+
+          // Điểm nguy cơ
           const score = Math.min(98.5, 20 + open * 15 + proc * 5).toFixed(2);
           const pill = document.getElementById('riskScorePill');
           pill.innerText = score;
@@ -1716,7 +2044,13 @@ def dashboard_html():
           }
         }
 
-        // 3. Cập nhật Tunnel URL
+        // 3. Voice text
+        if (data.voice_alert && data.voice_alert.text) {
+          const vt = document.getElementById('voiceFullText');
+          if (vt) vt.innerText = `"${data.voice_alert.text}"`;
+        }
+
+        // 4. Tunnel URL
         if (data.tunnel_url) {
           document.getElementById('tunnelUrlText').innerText = data.tunnel_url;
         }
@@ -1729,7 +2063,6 @@ def dashboard_html():
 
     function triggerEmergencyCall() {
       const topBtn = document.getElementById('topCallBtn');
-      const actBtn = document.getElementById('actionCallBtn');
       topBtn.innerText = 'Đang gọi...';
       
       fetch('/api/test_internal_call', { method: 'POST' })
@@ -1737,9 +2070,7 @@ def dashboard_html():
         .then(data => {
           topBtn.innerText = 'Đã gọi về App!';
           alert('🚨 Đã phát lệnh gọi khẩn cấp thành công! Điện thoại của ní đang đổ chuông!');
-          setTimeout(() => {
-            topBtn.innerText = 'Bắn Cuộc Gọi Về App';
-          }, 3500);
+          setTimeout(() => { topBtn.innerText = 'Bắn Cuộc Gọi Về App'; }, 3500);
         })
         .catch(e => {
           topBtn.innerText = 'Lỗi kết nối';
@@ -1750,11 +2081,10 @@ def dashboard_html():
     function playAiVoiceDemo() {
       const audio = new Audio('/api/voice_alert?t=' + Date.now());
       audio.play().catch(e => {
-        alert('Trình duyệt cần ní tương tác để phát âm thanh. Vui lòng bấm thử nghiệm gọi điện trên App!');
+        alert('Trình duyệt cần ní tương tác trước để phát âm thanh. Vui lòng bấm thử nghiệm gọi điện trên App!');
       });
     }
 
-    // Tự động quét mỗi 2.5 giây
     setInterval(fetchStatus, 2500);
     fetchStatus();
   </script>
