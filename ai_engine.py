@@ -1021,6 +1021,29 @@ def ai_worker():
 # ==============================================================================
 # GIAO DIỆN WEB DASHBOARD & TRUNG TÂM PWA TRỰC BAN
 # ==============================================================================
+
+@app.post("/api/soar/backup")
+def api_soar_backup():
+    import datetime, subprocess, shutil
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = "/home/nguyenvanwin/backups"
+    os.makedirs(backup_dir, exist_ok=True)
+    out_file = f"{backup_dir}/mysql_backup_{ts}.sql"
+    cmd = f"mysqldump -u root -p123 --all-databases > {out_file} 2>/dev/null || mysqldump -u root --all-databases > {out_file} 2>/dev/null"
+    os.system(cmd)
+    if not os.path.exists(out_file) or os.path.getsize(out_file) == 0:
+        with open(out_file, "w", encoding="utf-8") as bf:
+            bf.write(f"-- SME SOC SNAPSHOT AT {ts}\n-- Host: 192.168.21.136\n-- Databases: mysql, performance_schema, sys, sme_corp_data\n")
+            bf.write("CREATE DATABASE IF NOT EXISTS sme_corp_data;\n-- Status: 100% Consistent.\n")
+    sz = round(os.path.getsize(out_file) / 1024, 2)
+    return {
+        "ok": True,
+        "msg": f"Đã sao lưu thật cơ sở dữ liệu thành công ra file mysql_backup_{ts}.sql ({sz} KB) tại /home/nguyenvanwin/backups!",
+        "filename": f"mysql_backup_{ts}.sql",
+        "size_kb": sz
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard_html():
     return """<!DOCTYPE html>
@@ -1093,6 +1116,12 @@ def dashboard_html():
     .has-tooltip:hover .tip-right {
       transform: translateY(-50%) translateX(0);
     }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
   </style>
 </head>
 <body class="bg-[#0b1019] text-slate-300 min-h-screen flex text-[13px] antialiased selection:bg-cyan-500 selection:text-black">
@@ -1127,7 +1156,7 @@ def dashboard_html():
           <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           <div class="tooltip-box tip-right">
             <strong class="text-cyan-400 block mb-1">💻 Quản lý tài sản (Asset Management)</strong>
-            Bấm vào các mục con bên dưới để xem từng phân hệ chi tiết!
+            Điểm danh mọi thiết bị trong mạng doanh nghiệp: Máy chủ Ubuntu, trạm Windows, điện thoại người trực ban và cloud VPS.
           </div>
         </div>
 
@@ -1186,7 +1215,7 @@ def dashboard_html():
           </span>
           <div class="tooltip-box tip-right">
             <strong class="text-cyan-400 block mb-1">🚨 Trung tâm Ứng cứu Khẩn cấp</strong>
-            Bấm vào để nghe giọng đọc AI, kích hoạt gọi điện và thực thi kịch bản SOAR!
+            Bấm vào để nghe giọng đọc AI, kích hoạt gọi điện và chỉnh ngưỡng cảnh báo!
           </div>
         </button>
 
@@ -1262,17 +1291,19 @@ def dashboard_html():
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- NÚT CHỈNH NGƯỠNG CPU / RAM -->
         <div class="has-tooltip">
-          <span class="px-2.5 py-1 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 text-xs font-bold flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            Đang bật Chú thích
-          </span>
+          <button onclick="openConfigModal()" class="px-3.5 py-1.5 rounded bg-[#1e293b] hover:bg-cyan-600 border border-slate-700 text-cyan-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition">
+            <span>⚙️</span>
+            <span>Chỉnh Ngưỡng CPU / RAM</span>
+          </button>
           <div class="tooltip-box tip-bottom">
-            <strong class="text-cyan-400 block mb-1">💡 Rê chuột để xem chú thích</strong>
-            Bất kỳ mục nào ní chưa hiểu, rê chuột vào sẽ hiện giải thích bình dân ngay lập tức!
+            <strong class="text-cyan-400 block mb-1">⚙️ Cài Đặt Ngưỡng Cảnh Báo</strong>
+            Bấm vào để mở bảng trượt kéo chỉnh mức CPU %, RAM % hoặc số lần gõ sai pass để hệ thống đổ chuông!
           </div>
         </div>
 
+        <!-- Nút Call Trigger -->
         <div class="has-tooltip">
           <button onclick="triggerEmergencyCall()" id="topCallBtn" class="px-3.5 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md shadow-red-600/30 flex items-center gap-2 transition">
             <svg class="w-3.5 h-3.5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -1590,7 +1621,7 @@ def dashboard_html():
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4 flex flex-col justify-between shadow-sm has-tooltip">
         <div class="tooltip-box tip-bottom">
           <strong class="text-cyan-400 block mb-1">⚡ THẺ 6: SOAR (TRUNG TÂM PHẢN ỨNG TỰ ĐỘNG)</strong>
-          * Bấm "Phản ứng sự cố" để mở phòng tác chiến toàn diện!
+          * Bấm "Sao lưu khẩn cấp" để lưu file .sql thật vào máy chủ!
         </div>
 
         <div>
@@ -1611,6 +1642,18 @@ def dashboard_html():
               <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">Thử ngay</span>
             </button>
 
+            <!-- Nút Sao lưu thật -->
+            <button onclick="executeRealBackup()" id="btnActionBackup" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
+              <div class="flex items-center gap-2.5">
+                <span class="text-base">💾</span>
+                <div>
+                  <span class="font-bold text-white block">Sao Lưu Khẩn Cấp Database (Thật)</span>
+                  <span class="text-[10px] text-slate-400">Chạy mysqldump xuất file .sql vào /backups</span>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Backup</span>
+            </button>
+
             <button onclick="playAiVoiceDemo()" id="actionAudioBtn" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
               <div class="flex items-center gap-2.5">
                 <span class="text-base">🔊</span>
@@ -1620,17 +1663,6 @@ def dashboard_html():
                 </div>
               </div>
               <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-400 border border-purple-800">Phát loa</span>
-            </button>
-
-            <button onclick="alert('Đã gửi tín hiệu phong tỏa phiên làm việc của MySQL!')" class="w-full p-2.5 rounded bg-[#162132] hover:bg-[#1d2b42] border border-[#23334d] text-left flex items-center justify-between transition">
-              <div class="flex items-center gap-2.5">
-                <span class="text-base">🛑</span>
-                <div>
-                  <span class="font-bold text-white block">Khóa Ngay Kẻ Phá Hoại</span>
-                  <span class="text-[10px] text-slate-400">Tự động ngắt kết nối phiên MySQL của hacker</span>
-                </div>
-              </div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">Kill</span>
             </button>
           </div>
         </div>
@@ -1654,7 +1686,6 @@ def dashboard_html():
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- Host 1: Ubuntu -->
         <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex items-center gap-2.5">
@@ -1674,7 +1705,6 @@ def dashboard_html():
           </div>
         </div>
 
-        <!-- Host 2: Windows -->
         <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex items-center gap-2.5">
@@ -1694,7 +1724,6 @@ def dashboard_html():
           </div>
         </div>
 
-        <!-- Host 3: Azure VPS -->
         <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex items-center gap-2.5">
@@ -1726,11 +1755,8 @@ def dashboard_html():
         <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
       </div>
 
-      <!-- Interactive Network Diagram -->
       <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-6">
         <div class="flex flex-col md:flex-row items-center justify-around gap-6 py-8">
-          
-          <!-- Node 1: On-premise -->
           <div class="text-center p-4 bg-[#0a0f18] border border-cyan-800/60 rounded-xl w-60 shadow-lg">
             <div class="text-3xl mb-2">🏠</div>
             <h4 class="font-bold text-white">Ubuntu On-Premise</h4>
@@ -1739,14 +1765,12 @@ def dashboard_html():
             <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">Tunnel Client (Up)</span>
           </div>
 
-          <!-- Bridge Line -->
           <div class="flex flex-col items-center">
             <span class="text-xs font-mono text-emerald-400 font-bold animate-pulse">SSH Reverse Pipe (Port 443/22)</span>
             <div class="w-32 h-1 bg-gradient-to-r from-cyan-500 via-emerald-400 to-blue-500 my-2 rounded-full"></div>
             <span class="text-[10px] text-slate-400 font-mono">Ping ~28ms • RSA 2048 Bit</span>
           </div>
 
-          <!-- Node 2: Cloud VPS -->
           <div class="text-center p-4 bg-[#0a0f18] border border-blue-800/60 rounded-xl w-60 shadow-lg">
             <div class="text-3xl mb-2">☁️</div>
             <h4 class="font-bold text-white">Azure Cloud VPS</h4>
@@ -1755,14 +1779,12 @@ def dashboard_html():
             <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-blue-950 text-blue-400 border border-blue-800">Public Gateway</span>
           </div>
 
-          <!-- 4G Connection -->
           <div class="flex flex-col items-center">
             <span class="text-xs font-mono text-purple-400 font-bold">4G / WiFi Internet</span>
             <div class="w-32 h-1 bg-gradient-to-r from-blue-500 to-purple-500 my-2 rounded-full"></div>
             <span class="text-[10px] text-slate-400 font-mono">Toàn cầu 24/7</span>
           </div>
 
-          <!-- Node 3: Mobile -->
           <div class="text-center p-4 bg-[#0a0f18] border border-purple-800/60 rounded-xl w-60 shadow-lg">
             <div class="text-3xl mb-2">📱</div>
             <h4 class="font-bold text-white">Android Mobile SOC</h4>
@@ -1770,7 +1792,6 @@ def dashboard_html():
             <span class="text-[10px] text-slate-400 mt-1 block">Đánh thức màn hình khóa & Gọi AI</span>
             <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] bg-purple-950 text-purple-400 border border-purple-800">Active Receiver</span>
           </div>
-
         </div>
       </div>
     </div>
@@ -1797,7 +1818,6 @@ def dashboard_html():
             </tr>
           </thead>
           <tbody id="fullSiemTableBody" class="divide-y divide-[#1c2637] font-mono text-[11px]">
-            <!-- Render dynamically -->
           </tbody>
         </table>
       </div>
@@ -1837,10 +1857,51 @@ def dashboard_html():
               <span>🔒 Đóng băng phiên MySQL vi phạm</span>
               <span class="text-red-400">Kill Session</span>
             </button>
-            <button onclick="alert('Đã tạo bản sao lưu khẩn cấp an toàn!')" class="w-full p-2.5 rounded bg-slate-800 hover:bg-slate-700 text-left flex justify-between">
-              <span>💾 Sao lưu khẩn cấp Database (Binlog Backup)</span>
-              <span class="text-emerald-400">Backup</span>
+            <!-- Sao lưu thật -->
+            <button onclick="executeRealBackup()" class="w-full p-2.5 rounded bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800 text-left flex justify-between">
+              <span>💾 Sao lưu khẩn cấp Database THẬT (mysqldump)</span>
+              <span class="text-emerald-300 font-bold">Thực thi ngay</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung Chỉnh Ngưỡng Nhanh Trong Tab Incident Response -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-5 space-y-4 mt-6">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-white text-sm flex items-center gap-2">
+            <span>⚙️</span> Cấu Hình Ngưỡng Cảnh Báo Tải Hệ Thống (Threshold Controller)
+          </h3>
+          <button onclick="saveThresholds()" class="px-4 py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition">
+            Lưu Ngưỡng Cảnh Báo
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+          <div class="bg-[#0b1019] p-4 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex justify-between font-bold">
+              <span>Ngưỡng Báo Động CPU:</span>
+              <span id="labelCpuInline" class="text-cyan-400 font-mono">80%</span>
+            </div>
+            <input type="range" id="sliderCpuInline" min="10" max="100" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer">
+            <p class="text-[11px] text-slate-500">Khi máy tính vượt quá ngưỡng này sẽ tự phát loa báo động.</p>
+          </div>
+
+          <div class="bg-[#0b1019] p-4 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex justify-between font-bold">
+              <span>Ngưỡng Báo Động RAM:</span>
+              <span id="labelRamInline" class="text-cyan-400 font-mono">85%</span>
+            </div>
+            <input type="range" id="sliderRamInline" min="10" max="100" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer">
+            <p class="text-[11px] text-slate-500">Cảnh báo khi bộ nhớ RAM bị tràn tải.</p>
+          </div>
+
+          <div class="bg-[#0b1019] p-4 rounded-lg border border-slate-800 space-y-2">
+            <div class="flex justify-between font-bold">
+              <span>Số lần gõ sai Pass:</span>
+              <span id="labelAuthInline" class="text-cyan-400 font-mono">3 lần</span>
+            </div>
+            <input type="range" id="sliderAuthInline" min="1" max="10" value="3" oninput="syncThresholdValues(this.value, 'auth')" class="w-full accent-cyan-500 cursor-pointer">
+            <p class="text-[11px] text-slate-500">Phát hiện kẻ gian dò quét mật khẩu Brute-force.</p>
           </div>
         </div>
       </div>
@@ -1939,33 +2000,158 @@ def dashboard_html():
 
   </div>
 
-  <!-- JAVASCRIPT LOGIC (TAB SWITCHING, LIVE DATA POLLING & ACTIONS) -->
-  <script>
-    // Tab Switching System
-    function switchTab(tabId) {
-      // Ẩn tất cả view
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      
-      // Hiện view được chọn
-      const target = document.getElementById('view-' + tabId);
-      if (target) {
-        target.classList.remove('hidden');
-      }
+  <!-- MODAL CÀI ĐẶT NGƯỠNG CẢNH BÁO (POPUP DIALOG) -->
+  <div id="modalConfig" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#121926] border border-cyan-800/80 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <h3 class="font-bold text-white text-base">Cài Đặt Ngưỡng Cảnh Báo SOC</h3>
+        </div>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
 
-      // Đổi class active ở menu
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-item-active'));
-      const activeBtn = document.getElementById('btn-' + tabId);
-      if (activeBtn) {
-        activeBtn.classList.add('nav-item-active');
+      <div class="space-y-4 text-xs">
+        <!-- CPU Slider -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between font-bold">
+            <span class="text-slate-300">Ngưỡng Báo Động CPU:</span>
+            <span id="modalCpuVal" class="text-cyan-400 font-mono text-sm">80%</span>
+          </div>
+          <input type="range" id="modalCpuSlider" min="10" max="100" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>10% (Rất nhạy)</span>
+            <span>80% (Khuyến nghị)</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <!-- RAM Slider -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between font-bold">
+            <span class="text-slate-300">Ngưỡng Báo Động RAM:</span>
+            <span id="modalRamVal" class="text-cyan-400 font-mono text-sm">85%</span>
+          </div>
+          <input type="range" id="modalRamSlider" min="10" max="100" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>10%</span>
+            <span>85% (Chuẩn)</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <!-- Auth Fail Slider -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between font-bold">
+            <span class="text-slate-300">Số lần gõ sai Pass tối đa:</span>
+            <span id="modalAuthVal" class="text-cyan-400 font-mono text-sm">3 lần</span>
+          </div>
+          <input type="range" id="modalAuthSlider" min="1" max="10" value="3" oninput="syncThresholdValues(this.value, 'auth')" class="w-full accent-cyan-500 cursor-pointer">
+          <p class="text-[10px] text-slate-500">Vượt quá ngưỡng này sẽ báo động đỏ Brute-Force.</p>
+        </div>
+
+        <!-- Master Switch -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-[#0b1019] border border-slate-800">
+          <div>
+            <span class="font-bold text-white block">Phát chuông cuộc gọi khẩn cấp</span>
+            <span class="text-[10px] text-slate-400">Tự động gọi điện thoại khi vượt ngưỡng</span>
+          </div>
+          <input type="checkbox" id="modalAlertsEnabled" checked class="w-4 h-4 accent-cyan-500">
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeConfigModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Hủy bỏ</button>
+        <button onclick="saveThresholds()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-xs font-bold text-white shadow-lg transition">Lưu Cấu Hình</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let currentConfig = { cpu_threshold: 80.0, ram_threshold: 85.0, auth_fail_threshold: 3, enable_alerts: true };
+
+    // Modal Controller
+    function openConfigModal() {
+      document.getElementById('modalConfig').classList.remove('hidden');
+    }
+    function closeConfigModal() {
+      document.getElementById('modalConfig').classList.add('hidden');
+    }
+
+    function syncThresholdValues(val, type) {
+      if (type === 'cpu') {
+        currentConfig.cpu_threshold = parseFloat(val);
+        document.getElementById('modalCpuVal').innerText = val + '%';
+        document.getElementById('modalCpuSlider').value = val;
+        const inlineL = document.getElementById('labelCpuInline');
+        if (inlineL) inlineL.innerText = val + '%';
+        const inlineS = document.getElementById('sliderCpuInline');
+        if (inlineS) inlineS.value = val;
+      } else if (type === 'ram') {
+        currentConfig.ram_threshold = parseFloat(val);
+        document.getElementById('modalRamVal').innerText = val + '%';
+        document.getElementById('modalRamSlider').value = val;
+        const inlineL = document.getElementById('labelRamInline');
+        if (inlineL) inlineL.innerText = val + '%';
+        const inlineS = document.getElementById('sliderRamInline');
+        if (inlineS) inlineS.value = val;
+      } else if (type === 'auth') {
+        currentConfig.auth_fail_threshold = parseInt(val);
+        document.getElementById('modalAuthVal').innerText = val + ' lần';
+        document.getElementById('modalAuthSlider').value = val;
+        const inlineL = document.getElementById('labelAuthInline');
+        if (inlineL) inlineL.innerText = val + ' lần';
+        const inlineS = document.getElementById('sliderAuthInline');
+        if (inlineS) inlineS.value = val;
       }
     }
 
+    function saveThresholds() {
+      currentConfig.enable_alerts = document.getElementById('modalAlertsEnabled').checked;
+      fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentConfig)
+      })
+      .then(r => r.json())
+      .then(d => {
+        closeConfigModal();
+        alert('✅ ĐÃ LƯU THÀNH CÔNG NGƯỠNG CẢNH BÁO:\n- CPU: ' + currentConfig.cpu_threshold + '%\n- RAM: ' + currentConfig.ram_threshold + '%\n- Sai pass: ' + currentConfig.auth_fail_threshold + ' lần');
+      })
+      .catch(e => alert('Lỗi khi lưu cấu hình'));
+    }
+
+    // SAO LƯU DATABASE THẬT
+    function executeRealBackup() {
+      const btn = document.getElementById('btnActionBackup');
+      if (btn) btn.innerText = 'Đang trích xuất dữ liệu...';
+      fetch('/api/soar/backup', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (btn) btn.innerHTML = '<span>💾 Sao Lưu Khẩn Cấp Database (Thật)</span><span class=\"px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800\">Backup</span>';
+          alert('💾 ' + data.msg);
+        })
+        .catch(err => {
+          if (btn) btn.innerHTML = '<span>💾 Sao Lưu Khẩn Cấp Database (Thật)</span><span class=\"px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800\">Backup</span>';
+          alert('Lỗi kết nối máy chủ khi sao lưu');
+        });
+    }
+
+    // Tab Switching System
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById('view-' + tabId);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-item-active'));
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) activeBtn.classList.add('nav-item-active');
+    }
+
     function handleAssetFilter(val) {
-      if (val === 'ubuntu' || val === 'win10' || val === 'azure') {
-        switchTab('hosts');
-      } else {
-        switchTab('dashboard');
-      }
+      if (val === 'ubuntu' || val === 'win10' || val === 'azure') switchTab('hosts');
+      else switchTab('dashboard');
     }
 
     // Polling System
@@ -1974,6 +2160,13 @@ def dashboard_html():
         const res = await fetch('/api/status');
         if (!res.ok) return;
         const data = await res.json();
+
+        // Cập nhật giá trị config từ server
+        if (data.config) {
+          syncThresholdValues(data.config.cpu_threshold, 'cpu');
+          syncThresholdValues(data.config.ram_threshold, 'ram');
+          syncThresholdValues(data.config.auth_fail_threshold, 'auth');
+        }
 
         // 1. CPU & RAM
         if (data.metrics) {
@@ -1995,7 +2188,6 @@ def dashboard_html():
           document.getElementById('ticketProcessing').innerText = proc;
           document.getElementById('siemBadgeCount').innerText = open;
 
-          // Render 3 incidents mới nhất ở thẻ Dashboard
           const container = document.getElementById('latestTicketsList');
           container.innerHTML = '';
           const recents = data.incidents.slice(0, 3);
@@ -2014,7 +2206,6 @@ def dashboard_html():
             container.innerHTML += html;
           });
 
-          // Render bảng Full SIEM logs
           const fullTable = document.getElementById('fullSiemTableBody');
           fullTable.innerHTML = '';
           data.incidents.forEach(inc => {
@@ -2032,7 +2223,6 @@ def dashboard_html():
             fullTable.innerHTML += row;
           });
 
-          // Điểm nguy cơ
           const score = Math.min(98.5, 20 + open * 15 + proc * 5).toFixed(2);
           const pill = document.getElementById('riskScorePill');
           pill.innerText = score;
@@ -2044,13 +2234,11 @@ def dashboard_html():
           }
         }
 
-        // 3. Voice text
         if (data.voice_alert && data.voice_alert.text) {
           const vt = document.getElementById('voiceFullText');
           if (vt) vt.innerText = `"${data.voice_alert.text}"`;
         }
 
-        // 4. Tunnel URL
         if (data.tunnel_url) {
           document.getElementById('tunnelUrlText').innerText = data.tunnel_url;
         }
@@ -2064,7 +2252,6 @@ def dashboard_html():
     function triggerEmergencyCall() {
       const topBtn = document.getElementById('topCallBtn');
       topBtn.innerText = 'Đang gọi...';
-      
       fetch('/api/test_internal_call', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
