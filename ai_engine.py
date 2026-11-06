@@ -294,22 +294,48 @@ def audit_apps_for_cve(app_list, client_ip="192.168.21.153", hostname="Windows-H
                 else: med_cnt += 1
                 break
 
-    safe_cnt = max(0, len(app_list) - len(vulns))
-
     with _lock:
+        is_incremental = len(app_list) <= 3 and any("tep tai ve" in a.get("name", "").lower() for a in app_list)
+
+        if is_incremental:
+            existing_vulns = list(LATEST_CVE_AUDIT.get("vulnerabilities", []))
+            existing_apps = list(LATEST_CVE_AUDIT.get("recent_apps", []))
+
+            for nv in vulns:
+                if not any(ev.get("app", "").lower() == nv["app"].lower() and ev.get("cve") == nv["cve"] for ev in existing_vulns):
+                    existing_vulns.insert(0, nv)
+
+            for na in app_list:
+                if not any(ea.get("name", "").lower() == na.get("name", "").lower() for ea in existing_apps):
+                    existing_apps.insert(0, na)
+
+            final_vulns = existing_vulns
+            final_apps = existing_apps
+            total_count = max(len(final_apps), LATEST_CVE_AUDIT.get("total_apps", 0) + len(app_list))
+        else:
+            existing_file_vulns = [v for v in LATEST_CVE_AUDIT.get("vulnerabilities", []) if "tep tai ve" in v.get("app", "").lower()]
+            final_vulns = vulns + [fv for fv in existing_file_vulns if not any(nv["app"].lower() == fv.get("app", "").lower() for nv in vulns)]
+            final_apps = app_list[:35]
+            total_count = len(app_list)
+
+        crit_cnt = sum(1 for v in final_vulns if v.get("cvss", 0) >= 9.0)
+        high_cnt = sum(1 for v in final_vulns if 7.0 <= v.get("cvss", 0) < 9.0)
+        med_cnt = sum(1 for v in final_vulns if v.get("cvss", 0) < 7.0)
+        safe_cnt = max(0, total_count - len(final_vulns))
+
         LATEST_CVE_AUDIT["last_scanned"] = _now_str()
         LATEST_CVE_AUDIT["client_ip"] = client_ip
         LATEST_CVE_AUDIT["hostname"] = hostname
-        LATEST_CVE_AUDIT["total_apps"] = len(app_list)
-        LATEST_CVE_AUDIT["vulnerabilities_found"] = len(vulns)
+        LATEST_CVE_AUDIT["total_apps"] = total_count
+        LATEST_CVE_AUDIT["vulnerabilities_found"] = len(final_vulns)
         LATEST_CVE_AUDIT["stats"] = {
             "critical": crit_cnt,
             "high": high_cnt,
             "medium": med_cnt,
             "safe": safe_cnt
         }
-        LATEST_CVE_AUDIT["vulnerabilities"] = vulns
-        LATEST_CVE_AUDIT["recent_apps"] = app_list[:30]
+        LATEST_CVE_AUDIT["vulnerabilities"] = final_vulns
+        LATEST_CVE_AUDIT["recent_apps"] = final_apps[:35]
 
     now = time.time()
     if vulns and (now - _last_cve_alert_time > 60):
