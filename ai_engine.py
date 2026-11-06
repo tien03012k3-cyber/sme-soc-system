@@ -1117,6 +1117,8 @@ def dashboard_html():
       transform: translateY(-50%) translateX(0);
     }
 
+    .hidden { display: none !important; }
+
     /* Modal Backdrop */
     .modal-backdrop {
       background-color: rgba(0, 0, 0, 0.75);
@@ -2192,6 +2194,9 @@ def dashboard_html():
 
           const container = document.getElementById('latestTicketsList');
           container.innerHTML = '';
+          if (data.incidents.length === 0) {
+            container.innerHTML = '<div class="p-3 rounded bg-emerald-950/40 border border-emerald-800 text-emerald-400 text-center font-medium">🛡️ Toàn bộ hệ thống an toàn, chưa có vi phạm!</div>';
+          }
           const recents = data.incidents.slice(0, 3);
           recents.forEach(inc => {
             const isRed = inc.color === 'red';
@@ -2210,6 +2215,9 @@ def dashboard_html():
 
           const fullTable = document.getElementById('fullSiemTableBody');
           fullTable.innerHTML = '';
+          if (data.incidents.length === 0) {
+            fullTable.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-sans">Chưa có sự kiện an ninh bất thường nào được ghi nhận. Toàn bộ máy chủ hoạt động bình thường!</td></tr>';
+          }
           data.incidents.forEach(inc => {
             const isRed = inc.color === 'red';
             const badgeBg = isRed ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800';
