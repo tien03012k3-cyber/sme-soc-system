@@ -743,7 +743,21 @@ async def handle_cve_remediate(req: Request):
             "time": _now_str()
         }
         # Cập nhật danh sách loại bỏ lỗ hổng đã xóa
-        new_vulns = [v for v in LATEST_CVE_AUDIT.get("vulnerabilities", []) if target_file not in v.get("app", "")]
+        new_vulns = []
+        for v in LATEST_CVE_AUDIT.get("vulnerabilities", []):
+            v_app = v.get("app", "").lower()
+            t_file = target_file.lower()
+            a_name = app_name.lower()
+            # Bỏ qua nếu trùng target_file hoặc app_name
+            if t_file and t_file in v_app:
+                continue
+            if a_name and (a_name in v_app or v_app in a_name):
+                continue
+            if "winrar" in t_file and "winrar" in v_app:
+                continue
+            if "putty" in t_file and "putty" in v_app:
+                continue
+            new_vulns.append(v)
         LATEST_CVE_AUDIT["vulnerabilities"] = new_vulns
         LATEST_CVE_AUDIT["vulnerabilities_found"] = len(new_vulns)
         stats = LATEST_CVE_AUDIT.get("stats", {})
