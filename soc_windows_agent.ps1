@@ -3,6 +3,14 @@
 # MULTI-FOLDER RADAR (DESKTOP + DOWNLOADS + DOCUMENTS + TEMP) + SOAR REMEDIATION
 # ==============================================================================
 
+# Dam bao chi duy nhat 1 tien trinh Agent hoat dong (diet cac tien trinh Agent cu neu co)
+$myPid = $PID
+Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -like '*soc_windows_agent*' -and $_.ProcessId -ne $myPid
+} | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
+
 $SOC_SERVER = "http://192.168.21.136:8888"
 $METRICS_URL = "$SOC_SERVER/api/windows_metrics"
 $CVE_URL = "$SOC_SERVER/api/cve/report"
@@ -95,20 +103,21 @@ function Check-TargetFolders() {
             Get-ChildItem -Path $folder -File -ErrorAction SilentlyContinue | ForEach-Object {
                 $fullPath = $_.FullName
                 $currentPaths[$fullPath] = $true
-                $fn = $_.Name
+                $fn = $_.Name.ToLower()
 
                 if (-not $seenFiles.ContainsKey($fullPath)) {
                     $cveApp = $null
-                    if ($fn -match "winrar.*?(6[._\-]?[0-2][0-2]|6\.22|6\.20|5\.)") {
-                        $cveApp = @{ name = "WinRAR (Tep tai ve: $fn)"; version = "6.22.0"; publisher = "win.rar GmbH" }
-                    } elseif ($fn -match "putty.*?(0\.[0-7][0-9]|0\.80)") {
-                        $cveApp = @{ name = "PuTTY (Tep tai ve: $fn)"; version = "0.80"; publisher = "Simon Tatham" }
-                    } elseif ($fn -match "7z.*?(1[0-9]|2[0-2])") {
-                        $cveApp = @{ name = "7-Zip (Tep tai ve: $fn)"; version = "22.01"; publisher = "Igor Pavlov" }
-                    } elseif ($fn -match "git.*?(2\.[0-3][0-9]|2\.4[0-5])") {
-                        $cveApp = @{ name = "Git (Tep tai ve: $fn)"; version = "2.44.0"; publisher = "The Git Development Community" }
-                    } elseif ($fn -match "npp|notepad.*?(8\.[0-5])") {
-                        $cveApp = @{ name = "Notepad++ (Tep tai ve: $fn)"; version = "8.5.6"; publisher = "Notepad++ Team" }
+                    # Bat bat ky file nao co ten winrar, putty, 7z ma khong can go dung phien ban
+                    if ($fn -like "*winrar*") {
+                        $cveApp = @{ name = "WinRAR (Tep tai ve: $($_.Name))"; version = "6.22.0"; publisher = "win.rar GmbH" }
+                    } elseif ($fn -like "*putty*") {
+                        $cveApp = @{ name = "PuTTY (Tep tai ve: $($_.Name))"; version = "0.80"; publisher = "Simon Tatham" }
+                    } elseif ($fn -like "*7z*" -or $fn -like "*7-zip*") {
+                        $cveApp = @{ name = "7-Zip (Tep tai ve: $($_.Name))"; version = "22.01"; publisher = "Igor Pavlov" }
+                    } elseif ($fn -like "*git*") {
+                        $cveApp = @{ name = "Git (Tep tai ve: $($_.Name))"; version = "2.44.0"; publisher = "The Git Development Community" }
+                    } elseif ($fn -like "*notepad*" -or $fn -like "*npp*") {
+                        $cveApp = @{ name = "Notepad++ (Tep tai ve: $($_.Name))"; version = "8.5.6"; publisher = "Notepad++ Team" }
                     }
 
                     if ($cveApp) {
@@ -167,15 +176,20 @@ while ($true) {
             # SOAR 2: Lenh tieu huy tep doc hai / cach ly tu xa
             if ($resp.cve_action -eq "delete_file" -and $resp.target_file) {
                 $targetFile = $resp.target_file
-                $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetFile)
-                Write-Host "`n[!] [SOAR COMMAND] Nhan lenh tieu huy tep doc hai tu xa: $targetFile (Base: $baseName)" -ForegroundColor Red
+                # Trich xuat tu khoa chinh: vi du "winrar-x64-622" tu "winrar-x64-622.exe"
+                $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetFile).Trim()
+                $keyword = if ($baseName -match "(winrar|putty|7z|7-zip|git|npp|notepad)") { $Matches[1] } else { $baseName }
+                
+                Write-Host "`n[!] [SOAR COMMAND] Nhan lenh tieu huy tu xa: $targetFile (Tu khoa: $keyword)" -ForegroundColor Red
                 $deletedCount = 0
 
-                # Xoa trong cac thu muc canh chung (quet khong phan biet duoi file)
+                # Xoa trong tat ca cac thu muc canh chung (Desktop, Downloads, Temp...)
                 foreach ($folder in $watchFolders) {
                     if (Test-Path $folder) {
                         Get-ChildItem -Path $folder -File -ErrorAction SilentlyContinue | Where-Object {
-                            $_.Name -like "*$targetFile*" -or ($baseName -and $_.Name -like "*$baseName*")
+                            $_.Name.ToLower() -like "*$($targetFile.ToLower())*" -or 
+                            $_.Name.ToLower() -like "*$($baseName.ToLower())*" -or 
+                            ($keyword -and $_.Name.ToLower() -like "*$($keyword.ToLower())*")
                         } | ForEach-Object {
                             $delPath = $_.FullName
                             Remove-Item $delPath -Force -ErrorAction SilentlyContinue
@@ -186,8 +200,8 @@ while ($true) {
                     }
                 }
 
-                # Tim va xoa toan bo trong UserProfile neu chua thay
-                if ($deletedCount -eq 0 -and $baseName) {
+                # Tim va tieu huy toan bo trong UserProfile neu van chua thay
+                if ($deletedCount -eq 0) {
                     Get-ChildItem -Path $env:USERPROFILE -Filter "*$baseName*" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
                         $delP = $_.FullName
                         Remove-Item $delP -Force -ErrorAction SilentlyContinue
