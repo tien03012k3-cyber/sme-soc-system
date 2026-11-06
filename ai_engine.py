@@ -2752,12 +2752,9 @@ def dashboard_html():
               const sevBadge = isCrit
                 ? '<span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold border border-red-800">CRITICAL</span>'
                 : '<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-400 font-bold border border-amber-800">HIGH</span>';
-              const isFile = v.app.indexOf('Tep tai ve:') !== -1 || v.app.indexOf('.exe') !== -1;
-              const actionBtn = isFile
-                ? `<button onclick="remediateCveFile('${v.app}')" class="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] shadow-md shadow-red-600/30 flex items-center gap-1 mx-auto transition">
-                    <span>🗑️</span> Xóa Tệp Cách Ly
-                   </button>`
-                : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">Cập nhật thủ công</span>`;
+              const actionBtn = `<button onclick="remediateCveFile('${v.app}', '${v.cve}')" class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] shadow-md shadow-red-600/30 flex items-center gap-1.5 mx-auto transition cursor-pointer">
+                    <span>🗑️</span> Xóa / Cách Ly SOAR
+                   </button>`;
 
               return `<tr>
                 <td class="p-3 font-bold text-white font-sans">${v.app}</td>
@@ -2796,13 +2793,21 @@ def dashboard_html():
     }
 
     
-    function remediateCveFile(appName) {
-      if (!confirm('Bạn có chắc muốn kích hoạt SOAR để TIÊU HỦY tệp độc hại này khỏi máy trạm từ xa không?')) return;
+    function remediateCveFile(appName, cveCode) {
+      if (!confirm('Bạn có chắc muốn kích hoạt SOAR để TIÊU HỦY / CÁCH LY mối đe dọa [' + appName + '] khỏi máy trạm từ xa không?')) return;
       
-      let filename = 'winrar-x64-622.exe';
+      let filename = '';
       const m = appName.match(/Tep tai ve:\s*([^\)]+)/i);
       if (m) {
         filename = m[1].trim();
+      } else if (appName.toLowerCase().indexOf('winrar') !== -1) {
+        filename = 'winrar-x64-622.exe';
+      } else if (appName.toLowerCase().indexOf('putty') !== -1) {
+        filename = 'putty-0.80-installer.msi';
+      } else if (appName.toLowerCase().indexOf('7-zip') !== -1) {
+        filename = '7z2201-x64.exe';
+      } else {
+        filename = appName.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.exe';
       }
 
       fetch('/api/cve/remediate', {
@@ -2812,7 +2817,7 @@ def dashboard_html():
       })
       .then(res => res.json())
       .then(data => {
-        alert('⚡ ' + (data.msg || 'Đã phát lệnh SOAR xóa tệp từ xa!'));
+        alert('⚡ ' + (data.msg || 'Đã phát lệnh SOAR tiêu hủy / cách ly thành công!'));
         fetchCveStatus();
       })
       .catch(err => alert('Lỗi thực thi SOAR: ' + err));
