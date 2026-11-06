@@ -2269,7 +2269,7 @@ def dashboard_html():
               <span>Ngưỡng Báo Động CPU:</span>
               <span id="labelCpuInline" class="text-cyan-400 font-mono">80%</span>
             </div>
-            <input type="range" id="sliderCpuInline" min="10" max="100" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer">
+            <input type="range" id="sliderCpuInline" min="10" max="105" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer">
             <p class="text-[11px] text-slate-500">Khi máy tính vượt quá ngưỡng này sẽ tự phát loa báo động.</p>
           </div>
 
@@ -2278,7 +2278,7 @@ def dashboard_html():
               <span>Ngưỡng Báo Động RAM:</span>
               <span id="labelRamInline" class="text-cyan-400 font-mono">85%</span>
             </div>
-            <input type="range" id="sliderRamInline" min="10" max="100" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer">
+            <input type="range" id="sliderRamInline" min="10" max="105" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer">
             <p class="text-[11px] text-slate-500">Cảnh báo khi bộ nhớ RAM bị tràn tải.</p>
           </div>
 
@@ -2451,42 +2451,51 @@ def dashboard_html():
       </div>
 
       <div class="space-y-4 text-xs">
-        <!-- CPU Slider -->
-        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
-          <div class="flex justify-between font-bold">
+        <!-- CPU Slider & Direct Input -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center font-bold">
             <span class="text-slate-300">Ngưỡng Báo Động CPU:</span>
-            <span id="modalCpuVal" class="text-cyan-400 font-mono text-sm">80%</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="modalCpuNum" min="10" max="105" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-16 px-2 py-1 rounded-lg bg-slate-900 border border-cyan-800/80 text-cyan-400 font-mono text-sm font-bold text-center focus:border-cyan-400 focus:outline-none">
+              <span class="text-cyan-400 font-mono text-sm font-bold">%</span>
+            </div>
           </div>
-          <input type="range" id="modalCpuSlider" min="10" max="100" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer">
-          <div class="flex justify-between text-[10px] text-slate-500">
+          <input type="range" id="modalCpuSlider" min="10" max="105" value="80" oninput="syncThresholdValues(this.value, 'cpu')" class="w-full accent-cyan-500 cursor-pointer h-2 bg-slate-800 rounded-lg">
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono">
             <span>10% (Rất nhạy)</span>
             <span>80% (Khuyến nghị)</span>
-            <span>100%</span>
+            <span class="text-cyan-400 font-bold">105% (Tối đa)</span>
           </div>
         </div>
 
-        <!-- RAM Slider -->
-        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
-          <div class="flex justify-between font-bold">
+        <!-- RAM Slider & Direct Input -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center font-bold">
             <span class="text-slate-300">Ngưỡng Báo Động RAM:</span>
-            <span id="modalRamVal" class="text-cyan-400 font-mono text-sm">85%</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="modalRamNum" min="10" max="105" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-16 px-2 py-1 rounded-lg bg-slate-900 border border-cyan-800/80 text-cyan-400 font-mono text-sm font-bold text-center focus:border-cyan-400 focus:outline-none">
+              <span class="text-cyan-400 font-mono text-sm font-bold">%</span>
+            </div>
           </div>
-          <input type="range" id="modalRamSlider" min="10" max="100" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer">
-          <div class="flex justify-between text-[10px] text-slate-500">
+          <input type="range" id="modalRamSlider" min="10" max="105" value="85" oninput="syncThresholdValues(this.value, 'ram')" class="w-full accent-cyan-500 cursor-pointer h-2 bg-slate-800 rounded-lg">
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono">
             <span>10%</span>
             <span>85% (Chuẩn)</span>
-            <span>100%</span>
+            <span class="text-cyan-400 font-bold">105% (Tối đa)</span>
           </div>
         </div>
 
-        <!-- Auth Fail Slider -->
-        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-1.5">
-          <div class="flex justify-between font-bold">
+        <!-- Auth Fail Slider & Direct Input -->
+        <div class="bg-[#0b1019] p-3.5 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center font-bold">
             <span class="text-slate-300">Số lần gõ sai Pass tối đa:</span>
-            <span id="modalAuthVal" class="text-cyan-400 font-mono text-sm">3 lần</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="modalAuthNum" min="1" max="10" value="2" oninput="syncThresholdValues(this.value, 'auth')" class="w-16 px-2 py-1 rounded-lg bg-slate-900 border border-cyan-800/80 text-cyan-400 font-mono text-sm font-bold text-center focus:border-cyan-400 focus:outline-none">
+              <span class="text-cyan-400 font-mono text-sm font-bold">lần</span>
+            </div>
           </div>
-          <input type="range" id="modalAuthSlider" min="1" max="10" value="3" oninput="syncThresholdValues(this.value, 'auth')" class="w-full accent-cyan-500 cursor-pointer">
-          <p class="text-[10px] text-slate-500">Vượt quá ngưỡng này sẽ báo động đỏ Brute-Force.</p>
+          <input type="range" id="modalAuthSlider" min="1" max="10" value="2" oninput="syncThresholdValues(this.value, 'auth')" class="w-full accent-cyan-500 cursor-pointer h-2 bg-slate-800 rounded-lg">
+          <p class="text-[10px] text-slate-500">Vượt quá ngưỡng này sẽ kích hoạt báo động đỏ Brute-Force.</p>
         </div>
 
         <!-- Master Switch -->
@@ -2527,37 +2536,56 @@ def dashboard_html():
     } catch(e) {}
 
 
-    // Modal Controller
+    // Modal Controller & Chống tụt giá trị khi đang kéo
+    let isModalConfigOpen = false;
+
     function openConfigModal() {
+      isModalConfigOpen = true;
+      // Đồng bộ giá trị hiện có vào các ô nhập
+      syncThresholdValues(currentConfig.cpu_threshold, 'cpu');
+      syncThresholdValues(currentConfig.ram_threshold, 'ram');
+      syncThresholdValues(currentConfig.auth_fail_threshold, 'auth');
+      const alertsChk = document.getElementById('modalAlertsEnabled');
+      if (alertsChk) alertsChk.checked = currentConfig.enable_alerts !== false;
       const m = document.getElementById('modalConfig');
       if (m) m.style.display = 'flex';
     }
+
     function closeConfigModal() {
+      isModalConfigOpen = false;
       const m = document.getElementById('modalConfig');
       if (m) m.style.display = 'none';
     }
 
     function syncThresholdValues(val, type) {
+      val = Math.max(1, Math.min(105, parseFloat(val) || 0));
       if (type === 'cpu') {
-        currentConfig.cpu_threshold = parseFloat(val);
-        document.getElementById('modalCpuVal').innerText = val + '%';
-        document.getElementById('modalCpuSlider').value = val;
+        currentConfig.cpu_threshold = val;
+        const slider = document.getElementById('modalCpuSlider');
+        if (slider && document.activeElement !== slider) slider.value = val;
+        const numInput = document.getElementById('modalCpuNum');
+        if (numInput && document.activeElement !== numInput) numInput.value = val;
         const inlineL = document.getElementById('labelCpuInline');
         if (inlineL) inlineL.innerText = val + '%';
         const inlineS = document.getElementById('sliderCpuInline');
         if (inlineS) inlineS.value = val;
       } else if (type === 'ram') {
-        currentConfig.ram_threshold = parseFloat(val);
-        document.getElementById('modalRamVal').innerText = val + '%';
-        document.getElementById('modalRamSlider').value = val;
+        currentConfig.ram_threshold = val;
+        const slider = document.getElementById('modalRamSlider');
+        if (slider && document.activeElement !== slider) slider.value = val;
+        const numInput = document.getElementById('modalRamNum');
+        if (numInput && document.activeElement !== numInput) numInput.value = val;
         const inlineL = document.getElementById('labelRamInline');
         if (inlineL) inlineL.innerText = val + '%';
         const inlineS = document.getElementById('sliderRamInline');
         if (inlineS) inlineS.value = val;
       } else if (type === 'auth') {
-        currentConfig.auth_fail_threshold = parseInt(val);
-        document.getElementById('modalAuthVal').innerText = val + ' lần';
-        document.getElementById('modalAuthSlider').value = val;
+        val = Math.round(val);
+        currentConfig.auth_fail_threshold = val;
+        const slider = document.getElementById('modalAuthSlider');
+        if (slider && document.activeElement !== slider) slider.value = val;
+        const numInput = document.getElementById('modalAuthNum');
+        if (numInput && document.activeElement !== numInput) numInput.value = val;
         const inlineL = document.getElementById('labelAuthInline');
         if (inlineL) inlineL.innerText = val + ' lần';
         const inlineS = document.getElementById('sliderAuthInline');
@@ -2575,7 +2603,7 @@ def dashboard_html():
       .then(r => r.json())
       .then(d => {
         closeConfigModal();
-        alert('✅ ĐÃ LƯU THÀNH CÔNG NGƯỠNG CẢNH BÁO: CPU ' + currentConfig.cpu_threshold + '%, RAM ' + currentConfig.ram_threshold + '%, Sai pass: ' + currentConfig.auth_fail_threshold + ' lần');
+        alert('✅ ĐÃ LƯU THÀNH CÔNG TẤT CẢ CẤU HÌNH:\n• Ngưỡng CPU: ' + currentConfig.cpu_threshold + '%\n• Ngưỡng RAM: ' + currentConfig.ram_threshold + '%\n• Sai pass tối đa: ' + currentConfig.auth_fail_threshold + ' lần\n• Cuộc gọi khẩn cấp: ' + (currentConfig.enable_alerts ? 'Bật' : 'Tắt'));
       })
       .catch(e => alert('Lỗi khi lưu cấu hình'));
     }
@@ -2619,11 +2647,16 @@ def dashboard_html():
         if (!res.ok) return;
         const data = await res.json();
 
-        // Cập nhật giá trị config từ server
+        // Cập nhật giá trị config từ server (chỉ khi không mở modal để tránh tụt thanh trượt khi đang kéo)
         if (data.config) {
-          syncThresholdValues(data.config.cpu_threshold, 'cpu');
-          syncThresholdValues(data.config.ram_threshold, 'ram');
-          syncThresholdValues(data.config.auth_fail_threshold, 'auth');
+          currentConfig = Object.assign({}, currentConfig, data.config);
+          if (!isModalConfigOpen) {
+            syncThresholdValues(data.config.cpu_threshold, 'cpu');
+            syncThresholdValues(data.config.ram_threshold, 'ram');
+            syncThresholdValues(data.config.auth_fail_threshold, 'auth');
+            const alertsChk = document.getElementById('modalAlertsEnabled');
+            if (alertsChk) alertsChk.checked = data.config.enable_alerts !== false;
+          }
         }
 
         // 1. CPU & RAM
