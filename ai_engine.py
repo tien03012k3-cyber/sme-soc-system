@@ -2603,7 +2603,7 @@ def dashboard_html():
       .then(r => r.json())
       .then(d => {
         closeConfigModal();
-        alert('✅ ĐÃ LƯU THÀNH CÔNG TẤT CẢ CẤU HÌNH:\n• Ngưỡng CPU: ' + currentConfig.cpu_threshold + '%\n• Ngưỡng RAM: ' + currentConfig.ram_threshold + '%\n• Sai pass tối đa: ' + currentConfig.auth_fail_threshold + ' lần\n• Cuộc gọi khẩn cấp: ' + (currentConfig.enable_alerts ? 'Bật' : 'Tắt'));
+        alert('✅ ĐÃ LƯU THÀNH CÔNG! CPU: ' + currentConfig.cpu_threshold + '%, RAM: ' + currentConfig.ram_threshold + '%, Sai pass: ' + currentConfig.auth_fail_threshold + ' lần');
       })
       .catch(e => alert('Lỗi khi lưu cấu hình'));
     }
