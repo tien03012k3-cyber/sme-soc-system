@@ -2797,7 +2797,7 @@ def dashboard_html():
       if (!confirm('Bạn có chắc muốn kích hoạt SOAR để TIÊU HỦY / CÁCH LY mối đe dọa [' + appName + '] khỏi máy trạm từ xa không?')) return;
       
       let filename = '';
-      const m = appName.match(/Tep tai ve:\s*([^\)]+)/i);
+      const m = appName.match(/Tep.*?:\s*([^\)]+)/i);
       if (m) {
         filename = m[1].trim();
       } else if (appName.toLowerCase().indexOf('winrar') !== -1) {
