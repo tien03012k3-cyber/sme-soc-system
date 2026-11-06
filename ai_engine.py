@@ -2001,7 +2001,7 @@ def dashboard_html():
   </div>
 
   <!-- MODAL CÀI ĐẶT NGƯỠNG CẢNH BÁO (POPUP DIALOG) -->
-  <div id="modalConfig" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+  <div id="modalConfig" onclick="if(event.target===this)closeConfigModal()" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4" style="display: none;">
     <div class="bg-[#121926] border border-cyan-800/80 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
@@ -2073,10 +2073,12 @@ def dashboard_html():
 
     // Modal Controller
     function openConfigModal() {
-      document.getElementById('modalConfig').classList.remove('hidden');
+      const m = document.getElementById('modalConfig');
+      if (m) m.style.display = 'flex';
     }
     function closeConfigModal() {
-      document.getElementById('modalConfig').classList.add('hidden');
+      const m = document.getElementById('modalConfig');
+      if (m) m.style.display = 'none';
     }
 
     function syncThresholdValues(val, type) {
@@ -2117,7 +2119,7 @@ def dashboard_html():
       .then(r => r.json())
       .then(d => {
         closeConfigModal();
-        alert('✅ ĐÃ LƯU THÀNH CÔNG NGƯỠNG CẢNH BÁO:\n- CPU: ' + currentConfig.cpu_threshold + '%\n- RAM: ' + currentConfig.ram_threshold + '%\n- Sai pass: ' + currentConfig.auth_fail_threshold + ' lần');
+        alert('✅ ĐÃ LƯU THÀNH CÔNG NGƯỠNG CẢNH BÁO: CPU ' + currentConfig.cpu_threshold + '%, RAM ' + currentConfig.ram_threshold + '%, Sai pass: ' + currentConfig.auth_fail_threshold + ' lần');
       })
       .catch(e => alert('Lỗi khi lưu cấu hình'));
     }
