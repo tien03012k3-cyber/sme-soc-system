@@ -130,6 +130,207 @@ LATEST_VOICE_ALERT = {
 _tts_lock = threading.Lock()
 
 
+
+# ==============================================================================
+# HỆ THỐNG QUẢN LÝ LỖ HỔNG PHẦN MỀM (CVE VULNERABILITY AUDIT)
+# ==============================================================================
+KNOWN_CVE_DB = [
+    {
+        "app_pattern": r"winrar",
+        "cve": "CVE-2023-38831",
+        "cvss": 7.8,
+        "severity": "HIGH",
+        "affected_max": "6.22.99",
+        "fixed_version": "6.23",
+        "description": "Lỗ hổng thực thi mã tùy ý khi người dùng mở file nén giả mạo (ZIP/RAR)",
+        "recommendation": "Cập nhật khẩn cấp lên WinRAR 6.23 trở lên hoặc gỡ cài đặt"
+    },
+    {
+        "app_pattern": r"winrar",
+        "cve": "CVE-2023-40477",
+        "cvss": 7.8,
+        "severity": "HIGH",
+        "affected_max": "6.22.99",
+        "fixed_version": "6.23",
+        "description": "Lỗ hổng thực thi mã từ xa qua cơ chế phân giải khối phục hồi RAR",
+        "recommendation": "Nâng cấp lên phiên bản WinRAR 6.23"
+    },
+    {
+        "app_pattern": r"7-zip",
+        "cve": "CVE-2023-31102",
+        "cvss": 7.8,
+        "severity": "HIGH",
+        "affected_max": "23.00",
+        "fixed_version": "23.01",
+        "description": "Lỗ hổng leo thang đặc quyền và làm hỏng bộ nhớ qua giao diện 7-Zip",
+        "recommendation": "Cập nhật lên 7-Zip phiên bản 23.01 trở lên"
+    },
+    {
+        "app_pattern": r"notepad\+\+",
+        "cve": "CVE-2023-40031",
+        "cvss": 7.8,
+        "severity": "HIGH",
+        "affected_max": "8.5.6",
+        "fixed_version": "8.5.7",
+        "description": "Lỗ hổng tràn bộ đệm đọc ghi (Buffer Overflow) khi phân tích chuỗi UTF-16",
+        "recommendation": "Nâng cấp lên Notepad++ 8.5.7 trở lên"
+    },
+    {
+        "app_pattern": r"putty",
+        "cve": "CVE-2024-31497",
+        "cvss": 8.1,
+        "severity": "HIGH",
+        "affected_max": "0.80",
+        "fixed_version": "0.81",
+        "description": "Lộ lọt khóa bí mật SSH ECDSA P-521 qua việc phân tích chữ ký số",
+        "recommendation": "Thu hồi khóa cũ và nâng cấp ngay lên PuTTY 0.81"
+    },
+    {
+        "app_pattern": r"\bgit\b",
+        "cve": "CVE-2024-32002",
+        "cvss": 9.0,
+        "severity": "CRITICAL",
+        "affected_max": "2.45.0",
+        "fixed_version": "2.45.1",
+        "description": "Thực thi mã từ xa (RCE) thông qua kỹ thuật clone submodule độc hại trên Windows",
+        "recommendation": "Cập nhật Git for Windows lên phiên bản >= 2.45.1"
+    },
+    {
+        "app_pattern": r"filezilla",
+        "cve": "CVE-2023-44487",
+        "cvss": 7.5,
+        "severity": "HIGH",
+        "affected_max": "3.64.99",
+        "fixed_version": "3.65.0",
+        "description": "Lỗ hổng Rapid Reset HTTP/2 gây sập ứng dụng và nghẽn tài nguyên",
+        "recommendation": "Nâng cấp lên FileZilla Client >= 3.65.0"
+    },
+    {
+        "app_pattern": r"google chrome",
+        "cve": "CVE-2023-7024",
+        "cvss": 8.8,
+        "severity": "HIGH",
+        "affected_max": "120.0.6098.99",
+        "fixed_version": "120.0.6099.129",
+        "description": "Lỗ hổng tràn bộ nhớ đệm WebRTC bị tin tặc khai thác zero-day",
+        "recommendation": "Chạy Google Chrome Update để nâng cấp lên bản mới nhất"
+    },
+    {
+        "app_pattern": r"python",
+        "cve": "CVE-2023-36632",
+        "cvss": 7.5,
+        "severity": "HIGH",
+        "affected_max": "3.11.3",
+        "fixed_version": "3.11.4",
+        "description": "Lỗ hổng chèn mã độc vào header email và giải nén tarfile độc hại",
+        "recommendation": "Cập nhật Python runtime lên >= 3.11.4 hoặc >= 3.10.12"
+    },
+    {
+        "app_pattern": r"anydesk",
+        "cve": "CVE-2023-38633",
+        "cvss": 8.8,
+        "severity": "HIGH",
+        "affected_max": "7.0.13",
+        "fixed_version": "7.0.14",
+        "description": "Lỗ hổng vượt qua kiểm soát truy cập và leo thang đặc quyền từ xa",
+        "recommendation": "Cập nhật AnyDesk lên phiên bản an toàn mới nhất"
+    }
+]
+
+LATEST_CVE_AUDIT = {
+    "last_scanned": None,
+    "client_ip": "Chưa quét",
+    "hostname": "Chưa quét",
+    "total_apps": 0,
+    "vulnerabilities_found": 0,
+    "stats": {"critical": 0, "high": 0, "medium": 0, "safe": 0},
+    "vulnerabilities": [],
+    "recent_apps": []
+}
+
+_last_cve_alert_time = 0
+
+def _parse_version(v_str):
+    if not v_str: return ()
+    nums = re.findall(r'\d+', str(v_str))
+    return tuple(int(x) for x in nums)
+
+def audit_apps_for_cve(app_list, client_ip="192.168.21.153", hostname="Windows-Host"):
+    global LATEST_CVE_AUDIT, _last_cve_alert_time
+    vulns = []
+    crit_cnt = 0
+    high_cnt = 0
+    med_cnt = 0
+
+    for app in app_list:
+        app_name = app.get("name", "")
+        app_ver = app.get("version", "")
+        if not app_name: continue
+
+        for rule in KNOWN_CVE_DB:
+            if re.search(rule["app_pattern"], app_name, re.IGNORECASE):
+                if app_ver and rule.get("affected_max"):
+                    v_installed = _parse_version(app_ver)
+                    v_max = _parse_version(rule["affected_max"])
+                    if v_installed and v_max and v_installed > v_max:
+                        continue
+
+                vuln_item = {
+                    "app": app_name,
+                    "version": app_ver or "Chưa rõ",
+                    "cve": rule["cve"],
+                    "cvss": rule["cvss"],
+                    "severity": rule["severity"],
+                    "description": rule["description"],
+                    "recommendation": rule["recommendation"],
+                    "detected_at": _now_str()
+                }
+                vulns.append(vuln_item)
+
+                if rule["cvss"] >= 9.0: crit_cnt += 1
+                elif rule["cvss"] >= 7.0: high_cnt += 1
+                else: med_cnt += 1
+                break
+
+    safe_cnt = max(0, len(app_list) - len(vulns))
+
+    with _lock:
+        LATEST_CVE_AUDIT["last_scanned"] = _now_str()
+        LATEST_CVE_AUDIT["client_ip"] = client_ip
+        LATEST_CVE_AUDIT["hostname"] = hostname
+        LATEST_CVE_AUDIT["total_apps"] = len(app_list)
+        LATEST_CVE_AUDIT["vulnerabilities_found"] = len(vulns)
+        LATEST_CVE_AUDIT["stats"] = {
+            "critical": crit_cnt,
+            "high": high_cnt,
+            "medium": med_cnt,
+            "safe": safe_cnt
+        }
+        LATEST_CVE_AUDIT["vulnerabilities"] = vulns
+        LATEST_CVE_AUDIT["recent_apps"] = app_list[:30]
+
+    now = time.time()
+    if vulns and (now - _last_cve_alert_time > 60):
+        _last_cve_alert_time = now
+        top = vulns[0]
+        color = "red" if crit_cnt > 0 else "white"
+        add_incident(color, "CVE AUDIT", f"Phát hiện {len(vulns)} lỗ hổng phần mềm trên {client_ip}", f"Lỗ hổng: {top['cve']} ({top['app']} v{top['version']} - CVSS {top['cvss']})")
+        log_alert_to_es(f"Phát hiện CVE: {top['cve']} ({top['app']})", "tien0", client_ip, "HIGH")
+
+        tg_vulns_text = "\n".join([f"• <b>[{v['severity']}] {v['app']} ({v['version']})</b>: <code>{v['cve']}</code> (CVSS: {v['cvss']})\n  <i>{v['recommendation']}</i>" for v in vulns[:5]])
+        msg = (
+            f"🛡️ <b>[SME SOC - PHÁT HIỆN LỖ HỔNG CVE TRÊN MÁY TRẠM]</b> 🛡️\n\n"
+            f"💻 <b>Máy trạm:</b> <code>{client_ip}</code> ({hostname})\n"
+            f"📊 <b>Tổng ứng dụng rà soát:</b> {len(app_list)}\n"
+            f"⚠️ <b>Số lỗ hổng phát hiện:</b> {len(vulns)} (Critical: {crit_cnt}, High: {high_cnt})\n\n"
+            f"🔍 <b>Chi tiết lỗ hổng nghiêm trọng:</b>\n{tg_vulns_text}\n\n"
+            f"⏱ <i>{_now_str()}</i>"
+        )
+        send_telegram(msg, thread_id=TOPIC_SYSTEM_ID)
+
+    return LATEST_CVE_AUDIT
+
+
 def get_current_tunnel_url():
     return "http://70.153.83.137"
 def generate_ai_voice(title, text):
@@ -509,6 +710,65 @@ async def update_config(req: Request):
             if k in body:
                 CONFIG[k] = float(body[k]) if "threshold" in k and k != "auth_fail_threshold" else int(body[k])
     return {"status": "ok", "config": CONFIG}
+
+
+@app.post("/api/cve/report")
+async def handle_cve_report(req: Request):
+    try:
+        body = await req.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    client_ip = body.get("client_ip", req.client.host if req.client else "192.168.21.153")
+    hostname = body.get("hostname", "Windows-Host")
+    apps = body.get("apps", [])
+
+    audit_res = audit_apps_for_cve(apps, client_ip, hostname)
+    return {
+        "status": "ok",
+        "client_ip": client_ip,
+        "vulnerabilities_found": audit_res["vulnerabilities_found"],
+        "stats": audit_res["stats"],
+        "vulnerabilities": audit_res["vulnerabilities"]
+    }
+
+@app.get("/api/cve/status")
+def get_cve_status():
+    with _lock:
+        return LATEST_CVE_AUDIT
+
+@app.post("/api/cve/demo_trigger")
+def trigger_cve_demo():
+    demo_apps = [
+        {"name": "WinRAR 6.22 (64-bit)", "version": "6.22.0", "publisher": "win.rar GmbH"},
+        {"name": "PuTTY release 0.80", "version": "0.80", "publisher": "Simon Tatham"},
+        {"name": "7-Zip 22.01 (x64)", "version": "22.01", "publisher": "Igor Pavlov"},
+        {"name": "Google Chrome", "version": "128.0.6613.120", "publisher": "Google LLC"},
+        {"name": "Notepad++ (64-bit x64)", "version": "8.6.9", "publisher": "Notepad++ Team"}
+    ]
+    audit_res = audit_apps_for_cve(demo_apps, "192.168.21.153", "WIN-KETOAN")
+    return {
+        "status": "ok",
+        "msg": "Đã nạp dữ liệu kiểm thử CVE thành công!",
+        "audit": audit_res
+    }
+
+@app.post("/api/cve/reset")
+def reset_cve_data():
+    global LATEST_CVE_AUDIT
+    with _lock:
+        LATEST_CVE_AUDIT = {
+            "last_scanned": None,
+            "client_ip": "Chưa quét",
+            "hostname": "Chưa quét",
+            "total_apps": 0,
+            "vulnerabilities_found": 0,
+            "stats": {"critical": 0, "high": 0, "medium": 0, "safe": 0},
+            "vulnerabilities": [],
+            "recent_apps": []
+        }
+    return {"status": "ok", "msg": "Đã đặt lại dữ liệu kiểm kê"}
+
 
 def _es_search(index, query):
     try:
@@ -1973,59 +2233,110 @@ def dashboard_html():
       </div>
     </div>
 
-    <!-- TAB 7: SOFTWARE INVENTORY VIEW -->
+        <!-- TAB 7: SOFTWARE INVENTORY & CVE VULNERABILITY AUDIT VIEW -->
     <div id="view-software" class="tab-content p-6 space-y-6 hidden">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white">Danh Mục Phần Mềm & Dịch Vụ Cài Đặt (Software Inventory)</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Kiểm kê phiên bản và lỗ hổng của các gói phần mềm đang chạy trên cụm máy chủ.</p>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🛡️</span>
+            <h2 class="text-lg font-bold text-white">Quản Lý Lỗ Hổng CVE & Danh Mục Phần Mềm (Vulnerability Audit)</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Tự động phát hiện và cảnh báo các phiên bản phần mềm chứa mã lỗ hổng bảo mật quốc tế (CVE) trên máy trạm Windows.</p>
         </div>
-        <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200">← Về Dashboard</button>
+        <div class="flex items-center gap-2">
+          <button onclick="triggerCveDemo()" class="px-3.5 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition">
+            <span>🧪</span> Nạp Mẫu Demo (WinRAR 6.22 CVE)
+          </button>
+          <button onclick="resetCveData()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+            <span>🧹</span> Đặt lại
+          </button>
+          <button onclick="switchTab('dashboard')" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition">← Về Dashboard</button>
+        </div>
       </div>
 
-      <div class="bg-[#121926] border border-[#1e283b] rounded-xl overflow-hidden">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-[#0b1019] text-slate-400 uppercase text-[10px] border-b border-slate-800">
-            <tr>
-              <th class="p-3">Tên phần mềm / Dịch vụ</th>
-              <th class="p-3">Phiên bản</th>
-              <th class="p-3">Máy chủ cài đặt</th>
-              <th class="p-3">Trạng thái an ninh</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[#1c2637] font-mono text-[11px]">
-            <tr>
-              <td class="p-3 font-bold text-white">MySQL Community Server</td>
-              <td class="p-3 text-slate-300">8.0.39-0ubuntu0.24.04.2</td>
-              <td class="p-3 text-cyan-400">Ubuntu SOC Host (192.168.21.136)</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Audited & Monitored</span></td>
-            </tr>
-            <tr>
-              <td class="p-3 font-bold text-white">Python Runtime</td>
-              <td class="p-3 text-slate-300">3.10.12 (x86_64)</td>
-              <td class="p-3 text-cyan-400">Ubuntu SOC Host</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Secure</span></td>
-            </tr>
-            <tr>
-              <td class="p-3 font-bold text-white">Nginx Web Reverse Proxy</td>
-              <td class="p-3 text-slate-300">1.24.0 (Ubuntu)</td>
-              <td class="p-3 text-blue-400">Azure Cloud VPS (70.153.83.137)</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Hardened</span></td>
-            </tr>
-            <tr>
-              <td class="p-3 font-bold text-white">Microsoft Edge-TTS Engine</td>
-              <td class="p-3 text-slate-300">6.1.18 (Neural Voice)</td>
-              <td class="p-3 text-cyan-400">Ubuntu SOC Host</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 font-bold">Voice Ready</span></td>
-            </tr>
-            <tr>
-              <td class="p-3 font-bold text-white">OpenSSH Server</td>
-              <td class="p-3 text-slate-300">9.6p1 (Ubuntu)</td>
-              <td class="p-3 text-cyan-400">Ubuntu Host & Azure VPS</td>
-              <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Keypair Protected</span></td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- METRIC COUNTER CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-[#121926] border border-[#1e283b] rounded-xl p-4">
+          <span class="text-xs text-slate-400 font-medium">Tổng phần mềm đã rà soát</span>
+          <div class="text-2xl font-bold text-white mt-1" id="cve-total-apps">0</div>
+          <span class="text-[10px] text-slate-500" id="cve-last-scanned">Chưa có dữ liệu</span>
+        </div>
+        <div class="bg-[#121926] border border-red-900/40 rounded-xl p-4">
+          <span class="text-xs text-red-400 font-medium">🔴 Lỗ hổng Critical (CVSS &ge; 9.0)</span>
+          <div class="text-2xl font-bold text-red-400 mt-1" id="cve-crit-count">0</div>
+          <span class="text-[10px] text-red-400/70">Nguy cấp tối đa - Khai thác từ xa</span>
+        </div>
+        <div class="bg-[#121926] border border-amber-900/40 rounded-xl p-4">
+          <span class="text-xs text-amber-400 font-medium">🟠 Lỗ hổng High (CVSS 7.0 - 8.9)</span>
+          <div class="text-2xl font-bold text-amber-400 mt-1" id="cve-high-count">0</div>
+          <span class="text-[10px] text-amber-400/70">Nguy cơ cao - Cần vá khẩn cấp</span>
+        </div>
+        <div class="bg-[#121926] border border-emerald-900/40 rounded-xl p-4">
+          <span class="text-xs text-emerald-400 font-medium">🟢 Phần mềm an toàn</span>
+          <div class="text-2xl font-bold text-emerald-400 mt-1" id="cve-safe-count">0</div>
+          <span class="text-[10px] text-emerald-400/70">Đã kiểm toán & kiểm tra phiên bản</span>
+        </div>
+      </div>
+
+      <!-- BẢNG 1: DANH SÁCH LỖ HỔNG CVE PHÁT HIỆN -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl overflow-hidden shadow-lg">
+        <div class="p-4 bg-[#0b1019] border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <h3 class="font-bold text-white text-sm">Danh Sách Lỗ Hổng Bảo Mật CVE Phát Hiện Trên Máy Trạm</h3>
+          </div>
+          <span id="cve-badge-status" class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300">Đang chờ quét</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#0e1420] text-slate-400 uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="p-3">Ứng dụng / Phần mềm</th>
+                <th class="p-3">Phiên bản cài</th>
+                <th class="p-3">Mã lỗi CVE</th>
+                <th class="p-3">Điểm CVSS</th>
+                <th class="p-3">Mức độ</th>
+                <th class="p-3">Mô tả lỗ hổng</th>
+                <th class="p-3">Khuyến nghị khắc phục (Remediation)</th>
+              </tr>
+            </thead>
+            <tbody id="cve-vuln-tbody" class="divide-y divide-[#1c2637] font-mono text-[11px]">
+              <tr>
+                <td colspan="7" class="p-6 text-center text-slate-500 font-sans text-xs">
+                  Chưa có dữ liệu rà soát. Hãy chạy lệnh <code class="text-cyan-400 font-mono">python cve_agent.py</code> trên máy Windows hoặc bấm nút <strong>"Nạp Mẫu Demo"</strong> ở trên để kiểm thử!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BẢNG 2: DANH MỤC PHẦN MỀM ĐÃ CÀI ĐẶT TRÊN MÁY TRẠM -->
+      <div class="bg-[#121926] border border-[#1e283b] rounded-xl overflow-hidden shadow-lg">
+        <div class="p-4 bg-[#0b1019] border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-base">📦</span>
+            <h3 class="font-bold text-white text-sm">Kiểm Kê Ứng Dụng Đã Cài Đặt (Installed Software Inventory)</h3>
+          </div>
+          <span class="text-xs text-slate-400" id="cve-host-info">Máy trạm: Chưa kết nối</span>
+        </div>
+        <div class="overflow-x-auto max-h-80">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#0e1420] text-slate-400 uppercase text-[10px] border-b border-slate-800 sticky top-0">
+              <tr>
+                <th class="p-3">Tên phần mềm / Gói ứng dụng</th>
+                <th class="p-3">Phiên bản</th>
+                <th class="p-3">Nhà phát hành (Publisher)</th>
+                <th class="p-3">Trạng thái an ninh</th>
+              </tr>
+            </thead>
+            <tbody id="cve-inventory-tbody" class="divide-y divide-[#1c2637] font-mono text-[11px]">
+              <tr>
+                <td colspan="4" class="p-4 text-center text-slate-500 font-sans text-xs">Chưa có danh sách phần mềm gửi từ Agent.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -2330,7 +2641,106 @@ def dashboard_html():
 
     setInterval(fetchStatus, 2500);
     fetchStatus();
-  </script>
+  
+
+    // =========================================================================
+    // CVE VULNERABILITY AUDIT JAVASCRIPT LOGIC
+    // =========================================================================
+    function fetchCveStatus() {
+      fetch('/api/cve/status')
+        .then(res => res.json())
+        .then(data => {
+          if (!data) return;
+          const stats = data.stats || {};
+          document.getElementById('cve-total-apps').innerText = data.total_apps || 0;
+          document.getElementById('cve-crit-count').innerText = stats.critical || 0;
+          document.getElementById('cve-high-count').innerText = stats.high || 0;
+          document.getElementById('cve-safe-count').innerText = stats.safe || 0;
+
+          if (data.last_scanned) {
+            document.getElementById('cve-last-scanned').innerText = 'Quét lúc: ' + data.last_scanned;
+            document.getElementById('cve-host-info').innerText = 'Máy trạm: ' + (data.hostname || '') + ' (' + (data.client_ip || '') + ')';
+          }
+
+          const badge = document.getElementById('cve-badge-status');
+          if (data.vulnerabilities_found > 0) {
+            badge.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-red-950 text-red-400 border border-red-800';
+            badge.innerText = '⚠️ ' + data.vulnerabilities_found + ' LỖ HỔNG CẦN XỬ LÝ';
+          } else if (data.total_apps > 0) {
+            badge.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
+            badge.innerText = '✅ HỆ THỐNG AN TOÀN';
+          } else {
+            badge.className = 'px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-300';
+            badge.innerText = 'Đang chờ quét';
+          }
+
+          // Render Vuln Table
+          const vulnBody = document.getElementById('cve-vuln-tbody');
+          if (data.vulnerabilities && data.vulnerabilities.length > 0) {
+            vulnBody.innerHTML = data.vulnerabilities.map(v => {
+              const isCrit = v.cvss >= 9.0;
+              const sevBadge = isCrit
+                ? '<span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold border border-red-800">CRITICAL</span>'
+                : '<span class="px-2 py-0.5 rounded bg-amber-950 text-amber-400 font-bold border border-amber-800">HIGH</span>';
+              return `<tr>
+                <td class="p-3 font-bold text-white font-sans">${v.app}</td>
+                <td class="p-3 text-cyan-400">${v.version}</td>
+                <td class="p-3 text-amber-400 font-bold">${v.cve}</td>
+                <td class="p-3 font-bold ${isCrit ? 'text-red-400' : 'text-amber-400'}">${v.cvss}</td>
+                <td class="p-3">${sevBadge}</td>
+                <td class="p-3 text-slate-300 font-sans text-xs max-w-xs">${v.description}</td>
+                <td class="p-3 text-emerald-400 font-sans text-xs">${v.recommendation}</td>
+              </tr>`;
+            }).join('');
+          } else if (data.total_apps > 0) {
+            vulnBody.innerHTML = '<tr><td colspan="7" class="p-5 text-center text-emerald-400 font-sans font-bold">✅ Không phát hiện lỗ hổng CVE nguy hiểm nào trên máy tính đã kiểm tra!</td></tr>';
+          }
+
+          // Render Inventory Table
+          const invBody = document.getElementById('cve-inventory-tbody');
+          if (data.recent_apps && data.recent_apps.length > 0) {
+            const vulnNames = new Set((data.vulnerabilities || []).map(x => x.app.toLowerCase()));
+            invBody.innerHTML = data.recent_apps.map(app => {
+              const isVuln = vulnNames.has(app.name.toLowerCase());
+              const statusTag = isVuln
+                ? '<span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold">Vulnerable</span>'
+                : '<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-bold">Audited</span>';
+              return `<tr>
+                <td class="p-3 font-bold text-white font-sans">${app.name}</td>
+                <td class="p-3 text-slate-300">${app.version || '-'}</td>
+                <td class="p-3 text-slate-400 font-sans text-xs">${app.publisher || '-'}</td>
+                <td class="p-3">${statusTag}</td>
+              </tr>`;
+            }).join('');
+          }
+        })
+        .catch(err => console.error('Error fetching CVE status:', err));
+    }
+
+    function triggerCveDemo() {
+      fetch('/api/cve/demo_trigger', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          alert('🧪 ' + (data.msg || 'Đã nạp dữ liệu kiểm thử!'));
+          fetchCveStatus();
+        })
+        .catch(err => alert('Lỗi nạp demo: ' + err));
+    }
+
+    function resetCveData() {
+      fetch('/api/cve/reset', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          fetchCveStatus();
+        })
+        .catch(err => alert('Lỗi đặt lại: ' + err));
+    }
+
+    // Tự động cập nhật CVE khi tải trang
+    setInterval(fetchCveStatus, 6000);
+    setTimeout(fetchCveStatus, 1000);
+
+</script>
 </body>
 </html>"""
 
