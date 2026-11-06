@@ -1,103 +1,204 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="#070B14"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="36dp"
+    android:paddingBottom="40dp">
 
-    <!-- BADGE -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/emergency_dark"
-        android:paddingStart="16dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="6dp"
-        android:text="🚨 CUỘC GỌI BÁO ĐỘNG AN NINH"
-        android:textColor="#FCA5A5"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <!-- AVATAR -->
-    <ImageView
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:layout_marginTop="24dp"
-        android:src="@drawable/ic_shield"
-        app:tint="@color/emergency_red" />
-
-    <!-- TITLE -->
-    <TextView
-        android:id="@+id/tvCallTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="QUÁ TẢI TÀI NGUYÊN MÁY TRẠM"
-        android:textColor="@color/emergency_red"
-        android:textSize="22sp"
-        android:textStyle="bold" />
-
-    <!-- DETAILS -->
-    <TextView
-        android:id="@+id/tvCallDetails"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center"
-        android:lineSpacingExtra="4dp"
-        android:text="CPU: 99% | RAM: 85%\nMáy trạm Windows vượt ngưỡng an toàn!"
-        android:textColor="@color/text_white"
-        android:textSize="15sp" />
-
-    <TextView
-        android:id="@+id/tvCallStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="📞 ĐANG ĐỔ CHUÔNG RENG RENG..."
-        android:textColor="#FBBF24"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-    <!-- ACTION BUTTONS -->
+    <!-- TOP CALLER INFO HEADER -->
     <LinearLayout
+        android:id="@+id/layoutTopHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
         android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnAnswerCall"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:backgroundTint="@color/answer_green"
-            android:text="📞 NHẤC MÁY (NGHE GIỌNG NÓI AI)"
-            android:textColor="@color/text_white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#991B1B"
+            android:paddingStart="14dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="5dp"
+            android:text="🚨 CUỘC GỌI AN NINH KHẨN CẤP"
+            android:textColor="#FCA5A5"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
 
-        <Button
-            android:id="@+id/btnDeclineCall"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/card_border"
-            android:text="⛔ TẮT CHUÔNG / MỞ DASHBOARD"
-            android:textColor="@color/text_white"
-            android:textSize="14sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="TỔNG ĐÀI AN NINH SOC"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Bộ não AI Hoài My • Node 70.153.83.137"
+            android:textColor="#38BDF8"
+            android:textSize="13sp" />
+
     </LinearLayout>
 
-    <!-- SOAR ACTIONS (HIDDEN UNTIL ANSWERED) -->
+    <!-- CENTER CALLER AVATAR & INCIDENT CARD -->
+    <LinearLayout
+        android:id="@+id/layoutCenterInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutTopHeader"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Glowing Cyber Shield Avatar -->
+        <FrameLayout
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/bg_glass_card"
+            android:padding="16dp">
+
+            <ImageView
+                android:id="@+id/ivAvatarShield"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_shield"
+                android:contentDescription="Avatar" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvCallStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="📞 ĐANG ĐỔ CHUÔNG ĐẾN..."
+            android:textColor="#FBBF24"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+
+        <!-- Incident Details Frosted Box -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvCallTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="QUÁ TẢI TÀI NGUYÊN MÁY TRẠM"
+                android:textColor="#EF4444"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCallDetails"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:text="Phát hiện sự cố an ninh nghiêm trọng cần kỹ sư trực ban can thiệp khẩn cấp!"
+                android:textColor="#CBD5E1"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- BOTTOM PHONE CALL BUTTONS (GENUINE PHONE CALL UI) -->
+    <LinearLayout
+        android:id="@+id/layoutIncomingButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <!-- NÚT 1: NHẤC MÁY (MÀU ĐỎ theo đúng yêu cầu người dùng) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnAnswerCall"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:background="@drawable/bg_btn_call_red"
+                android:contentDescription="Nhấc máy"
+                android:elevation="8dp"
+                android:padding="18dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_call_answer" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="NHẤC MÁY"
+                android:textColor="#EF4444"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+        </LinearLayout>
+
+        <!-- NÚT 2: TỪ CHỐI (MÀU XANH theo đúng yêu cầu người dùng) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/btnDeclineCall"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:background="@drawable/bg_btn_call_green"
+                android:contentDescription="Từ chối"
+                android:elevation="8dp"
+                android:padding="18dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_call_decline" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="TỪ CHỐI"
+                android:textColor="#22C55E"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- IN-CALL STATE (VISIBLE ONLY AFTER ANSWERING) -->
     <LinearLayout
         android:id="@+id/layoutSoar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_alignParentBottom="true"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -109,22 +210,24 @@
             <Button
                 android:id="@+id/btnSoarShutdown"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="48dp"
                 android:layout_marginEnd="6dp"
-                android:backgroundTint="@color/emergency_red"
+                android:layout_weight="1"
+                android:backgroundTint="#DC2626"
                 android:text="🛑 Tắt máy từ xa"
+                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Button
                 android:id="@+id/btnSoarLower"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="48dp"
                 android:layout_marginStart="6dp"
-                android:backgroundTint="@color/primary_blue"
+                android:layout_weight="1"
+                android:backgroundTint="#0284C7"
                 android:text="⚡ Hạ tải SOAR"
+                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -132,12 +235,24 @@
         <Button
             android:id="@+id/btnOpenDashboard"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="48dp"
             android:layout_marginTop="10dp"
-            android:backgroundTint="#0284C7"
-            android:text="📊 MỞ DASHBOARD XỬ LÝ SỰ CỐ"
-            android:textColor="@color/text_white"
+            android:backgroundTint="#1E293B"
+            android:text="📊 Mở Dashboard Trực Ban"
+            android:textColor="#38BDF8"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnEndActiveCall"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#991B1B"
+            android:text="🔴 KẾT THÚC CUỘC GỌI"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>

@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
+    android:background="#070B14"
     android:orientation="vertical">
 
-    <!-- TOP NAVIGATION BAR -->
+    <!-- COMPACT MODERN MOBILE HEADER (46dp) -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:background="#0F172A"
+        android:layout_height="48dp"
+        android:background="#0E1524"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="12dp"
@@ -18,98 +18,100 @@
         android:elevation="4dp">
 
         <ImageView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:src="@drawable/ic_shield"
-            app:tint="@color/primary_light" />
+            android:contentDescription="Logo" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="SOC COMMAND"
-            android:textColor="@color/text_white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:text="SOC SENTINEL"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04" />
 
+        <!-- Status Badge -->
         <TextView
             android:id="@+id/tvStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="6dp"
             android:background="#16A34A"
             android:paddingStart="6dp"
-            android:paddingTop="3dp"
+            android:paddingTop="2dp"
             android:paddingEnd="6dp"
-            android:paddingBottom="3dp"
+            android:paddingBottom="2dp"
             android:text="🟢 TRỰC TUYẾN"
-            android:textColor="@color/text_white"
-            android:textSize="10sp"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp"
             android:textStyle="bold" />
 
-        <ImageButton
-            android:id="@+id/btnRefresh"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Làm mới"
-            android:src="@android:drawable/ic_popup_sync"
-            app:tint="@color/text_white" />
-
+        <!-- Quick Test Call Button -->
         <Button
             android:id="@+id/btnQuickTest"
             android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:layout_marginStart="4dp"
-            android:backgroundTint="@color/emergency_red"
+            android:layout_height="32dp"
+            android:backgroundTint="#DC2626"
             android:minWidth="0dp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:text="📞 TEST"
-            android:textColor="@color/text_white"
-            android:textSize="11sp"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
+        <!-- Settings Button -->
         <ImageButton
             android:id="@+id/btnSettings"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_marginStart="4dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Cài đặt"
             android:src="@android:drawable/ic_menu_preferences"
-            app:tint="@color/primary_light" />
+            app:tint="#38BDF8" />
 
     </LinearLayout>
 
-    <!-- LOADING PROGRESS BAR -->
+    <!-- HORIZONTAL LOADING PROGRESS BAR -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
+        android:layout_height="2dp"
         android:indeterminate="true"
         android:visibility="gone" />
 
-    <!-- MAIN WEBVIEW CONTAINER -->
+    <!-- MAIN VIEW CONTAINER WITH PULL-TO-REFRESH -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <WebView
-            android:id="@+id/webViewDashboard"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/bg_dark" />
+            android:layout_height="match_parent">
+
+            <WebView
+                android:id="@+id/webViewDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#070B14"
+                android:scrollbars="vertical"
+                android:overScrollMode="ifContentScrolls" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <!-- ERROR STATE VIEW -->
         <LinearLayout
             android:id="@+id/layoutError"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/bg_dark"
+            android:background="#070B14"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="24dp"
@@ -119,15 +121,15 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@android:drawable/ic_dialog_alert"
-                app:tint="@color/emergency_red" />
+                app:tint="#EF4444" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Không thể kết nối máy chủ SOC"
-                android:textColor="@color/text_white"
-                android:textSize="18sp"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -136,20 +138,20 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:gravity="center"
-                android:text="Vui lòng kiểm tra lại đường link Cloudflare Tunnel hoặc địa chỉ IP LAN."
-                android:textColor="@color/text_muted"
-                android:textSize="13sp" />
+                android:text="Vui lòng kiểm tra kết nối mạng máy chủ."
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/btnRetry"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:backgroundTint="@color/primary_blue"
+                android:backgroundTint="#0284C7"
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
                 android:text="🔄 THỬ LẠI KẾT NỐI"
-                android:textColor="@color/text_white"
+                android:textColor="#FFFFFF"
                 android:textStyle="bold" />
 
             <Button
@@ -157,11 +159,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:backgroundTint="@color/card_border"
+                android:backgroundTint="#1E293B"
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:text="⚙️ ĐỔI ĐƯỜNG LINK MÁY CHỦ"
-                android:textColor="@color/primary_light"
+                android:textColor="#38BDF8"
                 android:textSize="12sp" />
         </LinearLayout>
 

@@ -71,12 +71,14 @@ public class IncomingCallActivity extends AppCompatActivity {
         TextView tvTitle = findViewById(R.id.tvCallTitle);
         TextView tvDetails = findViewById(R.id.tvCallDetails);
         TextView tvStatus = findViewById(R.id.tvCallStatus);
-        Button btnAnswer = findViewById(R.id.btnAnswerCall);
-        Button btnDecline = findViewById(R.id.btnDeclineCall);
+        View btnAnswer = findViewById(R.id.btnAnswerCall);
+        View btnDecline = findViewById(R.id.btnDeclineCall);
+        View layoutIncomingButtons = findViewById(R.id.layoutIncomingButtons);
         LinearLayout layoutSoar = findViewById(R.id.layoutSoar);
         Button btnShutdown = findViewById(R.id.btnSoarShutdown);
         Button btnLower = findViewById(R.id.btnSoarLower);
         Button btnOpenDashboard = findViewById(R.id.btnOpenDashboard);
+        Button btnEndActiveCall = findViewById(R.id.btnEndActiveCall);
 
         if (title != null) tvTitle.setText(title);
         tvDetails.setText(alertDetails);
@@ -89,10 +91,10 @@ public class IncomingCallActivity extends AppCompatActivity {
             routeAudioToSpeaker();
 
             // 3. Đổi trạng thái giao diện
-            tvStatus.setText("🟢 ĐANG PHÁT GIỌNG NÓI AI QUA LOA NGOÀI...");
-            tvStatus.setTextColor(0xFF16A34A);
-            btnAnswer.setVisibility(View.GONE);
-            layoutSoar.setVisibility(View.VISIBLE);
+            tvStatus.setText("🟢 CUỘC GỌI ĐANG KẾT NỐI • PHÁT QUA LOA NGOÀI");
+            tvStatus.setTextColor(0xFF22C55E);
+            if (layoutIncomingButtons != null) layoutIncomingButtons.setVisibility(View.GONE);
+            if (layoutSoar != null) layoutSoar.setVisibility(View.VISIBLE);
 
             // 4. Phát âm thanh giọng nói AI (Ưu tiên MP3 từ Server, nếu lỗi tự động dùng TTS máy)
             playAIVoice(serverUrl + "api/voice_alert?t=" + System.currentTimeMillis());
@@ -103,6 +105,14 @@ public class IncomingCallActivity extends AppCompatActivity {
             SOCService.stopRingtoneAndVibrate(this);
             openDashboardActivity();
         });
+
+        if (btnEndActiveCall != null) {
+            btnEndActiveCall.setOnClickListener(v -> {
+                stopVoice();
+                SOCService.stopRingtoneAndVibrate(this);
+                finish();
+            });
+        }
 
         btnOpenDashboard.setOnClickListener(v -> {
             stopVoice();

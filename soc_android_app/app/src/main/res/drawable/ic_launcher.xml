@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Deep Navy Background -->
+    <path
+        android:fillColor="#0A0F1D"
+        android:pathData="M0,0 H108 V108 H0 Z" />
+
+    <!-- Circular Tech Grid -->
+    <path
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1"
+        android:pathData="M54,14 A40,40 0 1,1 53.99,14" />
+    <path
+        android:strokeColor="#1E293B"
+        android:strokeWidth="1"
+        android:pathData="M54,26 A28,28 0 1,1 53.99,26" />
+
+    <!-- Outer Cyber Hex Shield -->
+    <path
+        android:fillColor="#0F172A"
+        android:strokeColor="#0284C7"
+        android:strokeWidth="3.5"
+        android:pathData="M54,16 L88,29 L88,58 C88,77 74,92 54,98 C34,92 20,77 20,58 L20,29 Z" />
+
+    <!-- Inner Shield Glow -->
+    <path
+        android:fillColor="#162238"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:pathData="M54,24 L80,34 L80,56 C80,71 69,83 54,88 C39,83 28,71 28,56 L28,34 Z" />
+
+    <!-- Glowing Core Radar -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M54,42 C60.627,42 66,47.373 66,54 C66,60.627 60.627,66 54,66 C47.373,66 42,60.627 42,54 C42,47.373 47.373,42 54,42 Z" />
+
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,47 C57.866,47 61,50.134 61,54 C61,57.866 57.866,61 54,61 C50.134,61 47,57.866 47,54 C47,50.134 50.134,47 54,47 Z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,51 C55.657,51 57,52.343 57,54 C57,55.657 55.657,57 54,57 C52.343,57 51,55.657 51,54 C51,52.343 52.343,51 54,51 Z" />
+
+    <!-- Neon Reticle Marks -->
+    <path
+        android:strokeColor="#00F2FE"
+        android:strokeWidth="2.5"
+        android:pathData="M54,32 L54,38 M54,70 L54,76 M32,54 L38,54 M70,54 L76,54" />
+</vector>

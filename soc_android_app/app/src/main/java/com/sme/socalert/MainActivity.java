@@ -33,6 +33,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private WebView webView;
     private ProgressBar progressBar;
+    private SwipeRefreshLayout swipeRefresh;
     private TextView tvStatusBadge;
     private LinearLayout layoutError;
     private TextView tvErrorDetails;
@@ -65,24 +67,22 @@ public class MainActivity extends AppCompatActivity {
         // Bind Views
         webView = findViewById(R.id.webViewDashboard);
         progressBar = findViewById(R.id.progressBar);
+        swipeRefresh = findViewById(R.id.swipeRefreshLayout);
         tvStatusBadge = findViewById(R.id.tvStatusBadge);
         layoutError = findViewById(R.id.layoutError);
         tvErrorDetails = findViewById(R.id.tvErrorDetails);
 
-        ImageButton btnRefresh = findViewById(R.id.btnRefresh);
         Button btnQuickTest = findViewById(R.id.btnQuickTest);
         ImageButton btnSettings = findViewById(R.id.btnSettings);
         Button btnRetry = findViewById(R.id.btnRetry);
         Button btnChangeUrl = findViewById(R.id.btnChangeUrl);
 
-        // Setup WebView
-        setupWebView();
-
-        // Button Actions
-        btnRefresh.setOnClickListener(v -> {
-            progressBar.setVisibility(View.VISIBLE);
-            webView.reload();
-        });
+        if (swipeRefresh != null) {
+            swipeRefresh.setColorSchemeColors(0xFF0284C7, 0xFF38BDF8, 0xFF10B981);
+            swipeRefresh.setOnRefreshListener(() -> {
+                webView.reload();
+            });
+        }
 
         btnQuickTest.setOnClickListener(v -> triggerTestCall());
 
@@ -123,11 +123,14 @@ public class MainActivity extends AppCompatActivity {
         ws.setDatabaseEnabled(true);
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
-        ws.setSupportZoom(true);
-        ws.setBuiltInZoomControls(true);
+        ws.setSupportZoom(false);
+        ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
         ws.setCacheMode(WebSettings.LOAD_DEFAULT);
         ws.setMediaPlaybackRequiresUserGesture(false);
+
+        webView.setVerticalScrollBarEnabled(true);
+        webView.setHorizontalScrollBarEnabled(false);
 
         CookieManager.getInstance().setAcceptCookie(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -164,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 progressBar.setVisibility(View.GONE);
+                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                 tvStatusBadge.setText("🟢 TRỰC TUYẾN");
                 tvStatusBadge.setBackgroundColor(0xFF16A34A);
             }
@@ -193,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showErrorState(String details) {
         progressBar.setVisibility(View.GONE);
+        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
         webView.setVisibility(View.GONE);
         layoutError.setVisibility(View.VISIBLE);
         tvErrorDetails.setText(details + "\nĐịa chỉ hiện tại: " + currentServerUrl);

@@ -16,9 +16,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_shield"
-        android:label="SOC Alert"
-        android:roundIcon="@drawable/ic_shield"
+        android:icon="@drawable/ic_launcher"
+        android:label="SOC Sentinel"
+        android:roundIcon="@drawable/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SOCAlert"
         android:usesCleartextTraffic="true">

@@ -1,10 +1,39 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Outer Cyber Hex Shield -->
+    <path
+        android:fillColor="#0F172A"
+        android:strokeColor="#0284C7"
+        android:strokeWidth="3"
+        android:pathData="M48,4 L84,18 L84,52 C84,72 68,88 48,94 C28,88 12,72 12,52 L12,18 Z" />
+
+    <!-- Inner Shield Gradient Glow Accent -->
+    <path
+        android:fillColor="#1E293B"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1.5"
+        android:pathData="M48,12 L76,24 L76,50 C76,66 64,79 48,84 C32,79 20,66 20,50 L20,24 Z" />
+
+    <!-- Central Cyber Emitting Core (Radar Eye) -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M48,34 C55.732,34 62,40.268 62,48 C62,55.732 55.732,62 48,62 C40.268,62 34,55.732 34,48 C34,40.268 40.268,34 48,34 Z" />
+
     <path
         android:fillColor="#38BDF8"
-        android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM12,11.99h7c-0.53,4.12 -3.28,7.79 -7,8.94V12H5V6.3l7,-3.11v8.8z"/>
+        android:pathData="M48,40 C52.418,40 56,43.582 56,48 C56,52.418 52.418,56 48,56 C43.582,56 40,52.418 40,48 C40,43.582 43.582,40 48,40 Z" />
+
+    <!-- Core Biometric Pupil -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,45 C49.657,45 51,46.343 51,48 C51,49.657 49.657,51 48,51 C46.343,51 45,49.657 45,48 C45,46.343 46.343,45 48,45 Z" />
+
+    <!-- Horizontal & Vertical Radar Reticles -->
+    <path
+        android:strokeColor="#00F2FE"
+        android:strokeWidth="2"
+        android:pathData="M48,22 L48,30 M48,66 L48,74 M26,48 L32,48 M64,48 L70,48" />
 </vector>
