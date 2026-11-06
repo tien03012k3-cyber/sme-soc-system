@@ -1117,7 +1117,21 @@ def dashboard_html():
       transform: translateY(-50%) translateX(0);
     }
 
-    .hidden { display: none !important; }
+    .tab-content.hidden {
+      display: none !important;
+    }
+
+    .sidebar-collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
 
     /* Modal Backdrop */
     .modal-backdrop {
@@ -1129,22 +1143,30 @@ def dashboard_html():
 <body class="bg-[#0b1019] text-slate-300 min-h-screen flex text-[13px] antialiased selection:bg-cyan-500 selection:text-black">
 
   <!-- LEFT SIDEBAR -->
-  <aside class="w-64 bg-[#0e1420] border-r border-[#1a2333] flex flex-col shrink-0 select-none hidden md:flex">
+  <aside id="leftSidebar" class="w-64 bg-[#0e1420] border-r border-[#1a2333] flex flex-col shrink-0 select-none transition-all duration-300 ease-in-out">
     
     <!-- Brand / Logo -->
-    <div class="h-14 flex items-center px-5 border-b border-[#1a2333] gap-2.5 has-tooltip cursor-pointer" onclick="switchTab('dashboard')">
-      <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-cyan-500/20">
-        🛡️
+    <div class="h-14 flex items-center justify-between px-4 border-b border-[#1a2333]">
+      <div class="flex items-center gap-2.5 cursor-pointer has-tooltip" onclick="switchTab('dashboard')">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-cyan-500/20">
+          🛡️
+        </div>
+        <div>
+          <span class="font-bold text-sm tracking-wide text-white block">SME SOC DEFENSE</span>
+          <span class="text-[10px] text-cyan-400">Enterprise Edition</span>
+        </div>
+        <div class="tooltip-box tip-right">
+          <strong class="text-cyan-400 block mb-1">🏢 SME Defense SOC</strong>
+          Bấm vào đây để quay lại bảng điều khiển trung tâm!
+        </div>
       </div>
-      <div>
-        <span class="font-bold text-sm tracking-wide text-white block">SME DEFENSE SOC</span>
-        <span class="text-[10px] text-cyan-400">Bấm từng mục để đổi trang</span>
-      </div>
-
-      <div class="tooltip-box tip-right">
-        <strong class="text-cyan-400 block mb-1">🏢 SOC (Security Operations Center)</strong>
-        Bấm vào từng danh mục bên dưới để chuyển đổi giữa các màn hình giám sát chuyên sâu!
-      </div>
+      <button onclick="toggleSidebar()" class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition has-tooltip" title="Thu gọn menu">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+        <div class="tooltip-box tip-bottom">
+          <strong class="text-cyan-400 block mb-1">Thu gọn menu</strong>
+          Bấm để ẩn menu và phóng to màn hình chính.
+        </div>
+      </button>
     </div>
 
     <!-- Navigation Menu with Interactive Tab Switching -->
@@ -1252,8 +1274,18 @@ def dashboard_html():
   <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
     <!-- TOP BAR (FILTERS & ACTIONS) -->
-    <header class="h-14 bg-[#0e1420] border-b border-[#1a2333] px-6 flex items-center justify-between gap-4 sticky top-0 z-10">
+    <header class="h-14 bg-[#0e1420] border-b border-[#1a2333] px-5 flex items-center justify-between gap-4 sticky top-0 z-10">
       <div class="flex items-center gap-3 flex-1 max-w-3xl">
+        <!-- Nút Bật/Tắt Sidebar Phóng to Màn hình -->
+        <button onclick="toggleSidebar()" id="btnToggleSidebar" class="p-2 rounded-lg bg-[#141b29] hover:bg-cyan-600/30 border border-[#232d40] text-slate-300 hover:text-cyan-400 transition flex items-center justify-center has-tooltip" title="Ẩn/Hiện Menu bên trái">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+          </svg>
+          <div class="tooltip-box tip-bottom">
+            <strong class="text-cyan-400 block mb-1">🖥️ Phóng to / Thu nhỏ Màn hình</strong>
+            Bấm vào để ẩn hoặc hiện thanh menu bên trái, tối ưu không gian hiển thị toàn màn hình!
+          </div>
+        </button>
         <div class="relative has-tooltip">
           <select class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
             <option>SME Organization (FPT Headquarter)</option>
@@ -1335,7 +1367,7 @@ def dashboard_html():
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               Fleet Risk Scores
-              <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+              
             </h3>
             <span id="riskSeverityBadge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-950 text-amber-400 border border-amber-800">
               Severity: Medium
@@ -1578,7 +1610,7 @@ def dashboard_html():
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">MySQL Database Audit & Risks</h3>
-            <span class="text-cyan-400 text-xs">❓(Rê chuột xem)</span>
+            
           </div>
 
           <table class="w-full text-left text-xs">
@@ -2072,6 +2104,22 @@ def dashboard_html():
   <!-- JAVASCRIPT LOGIC -->
   <script>
     let currentConfig = { cpu_threshold: 80.0, ram_threshold: 85.0, auth_fail_threshold: 3, enable_alerts: true };
+
+        // Toggle Sidebar & Phóng to Dashboard
+    function toggleSidebar() {
+      const sb = document.getElementById('leftSidebar');
+      if (sb) {
+        const isCollapsed = sb.classList.toggle('sidebar-collapsed');
+        try { localStorage.setItem('soc_sidebar_collapsed', isCollapsed ? '1' : '0'); } catch(e) {}
+      }
+    }
+
+    try {
+      if (localStorage.getItem('soc_sidebar_collapsed') === '1') {
+        const sb = document.getElementById('leftSidebar');
+        if (sb) sb.classList.add('sidebar-collapsed');
+      }
+    } catch(e) {}
 
     // Modal Controller
     function openConfigModal() {
