@@ -136,12 +136,15 @@ def generate_ai_voice(title, text):
     global LATEST_VOICE_ALERT
     now_ts = time.time()
     with _lock:
-        LATEST_VOICE_ALERT["alert_id"] += 1
+        new_id = int(now_ts)
+        if new_id <= LATEST_VOICE_ALERT.get("alert_id", 0):
+            new_id = LATEST_VOICE_ALERT.get("alert_id", 0) + 1
+        LATEST_VOICE_ALERT["alert_id"] = new_id
         LATEST_VOICE_ALERT["title"] = title
         LATEST_VOICE_ALERT["text"] = text
         LATEST_VOICE_ALERT["time"] = _now_str()
         LATEST_VOICE_ALERT["timestamp"] = now_ts
-        aid = LATEST_VOICE_ALERT["alert_id"]
+        aid = new_id
 
     # 1. Bắn Web Push Notification tới màn hình khóa iPhone
     send_web_push(f"🚨 {title}", text)
@@ -750,15 +753,13 @@ MYSQL_WHITELIST_IPS = {
     '192.168.21.136', '192.168.21.148', '192.168.21.1', '10.136.203.48'
 }
 
-def trigger_db_alert(alert_key, title, details, voice_text, telegram_text, cooldown=30):
+def trigger_db_alert(alert_key, title, details, voice_text, telegram_text, cooldown=10):
     now = time.time()
     if now - _last_mysql_alerts.get(alert_key, 0) < cooldown:
         return
 
-    # Nếu là lệnh DROP thì CHỈ THÔNG BÁO trong khung giờ từ 18h đến 19h (7h tối)
-    current_hour = datetime.now().hour
-    if ('drop_table' in alert_key or 'DROP' in title.upper()) and not (18 <= current_hour < 19):
-        return
+    # Báo động DROP 24/7 không giới hạn khung giờ
+    # (Đã mở full 24/7 để hệ thống phản ứng tức thì với mọi hành vi phá hoại)
 
     _last_mysql_alerts[alert_key] = now
     
