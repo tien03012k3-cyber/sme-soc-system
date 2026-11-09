@@ -277,7 +277,7 @@ def _parse_version(v_str):
     nums = re.findall(r'\d+', str(v_str))
     return tuple(int(x) for x in nums)
 
-def audit_apps_for_cve(app_list, client_ip="192.168.21.153", hostname="Windows-Host"):
+def audit_apps_for_cve(app_list, client_ip="192.168.21.156", hostname="Windows-Host"):
     global LATEST_CVE_AUDIT, _last_cve_alert_time
     vulns = []
     crit_cnt = 0
@@ -658,6 +658,9 @@ async def receive_windows_metrics(request: Request):
             brute_act = "lock_user"
             brute_target_user = BRUTE_FORCE_INCIDENT.get("target_user", "tien0")
             brute_target_ip = BRUTE_FORCE_INCIDENT.get("attacker_ip", "")
+        elif BRUTE_FORCE_COMMAND.get("action") == "unlock_user" and (time.time() - b_cmd_ts < 600):
+            brute_act = "unlock_user"
+            brute_target_user = BRUTE_FORCE_COMMAND.get("target_user", "tien0")
         elif (time.time() - b_cmd_ts < 25):
             brute_act = BRUTE_FORCE_COMMAND.get("action", "none")
             brute_target_ip = BRUTE_FORCE_COMMAND.get("target_ip", "")
@@ -857,14 +860,14 @@ async def handle_cve_remediate(req: Request):
         stats["safe"] = stats.get("safe", 0) + 1
         LATEST_CVE_AUDIT["stats"] = stats
 
-    add_incident("white", "SOAR REMEDIATION", f"SOAR: Đã phát lệnh xóa cách ly tệp độc hại {target_file}", f"Đã tiêu hủy tệp tải về dính CVE trên máy trạm 192.168.21.153")
-    log_alert_to_es(f"SOAR Remediation: {target_file}", "tien0", "192.168.21.153", "HIGH")
+    add_incident("white", "SOAR REMEDIATION", f"SOAR: Đã phát lệnh xóa cách ly tệp độc hại {target_file}", f"Đã tiêu hủy tệp tải về dính CVE trên máy trạm 192.168.21.156")
+    log_alert_to_es(f"SOAR Remediation: {target_file}", "tien0", "192.168.21.156", "HIGH")
 
     msg = (
         f"⚡ <b>[SOAR THỰC THI THÀNH CÔNG]</b> ⚡\n\n"
         f"🎯 <b>Hành động:</b> Cách ly & Xóa file độc hại từ xa\n"
         f"📦 <b>Tệp bị tiêu hủy:</b> <code>{target_file}</code>\n"
-        f"💻 <b>Máy trạm đích:</b> <code>192.168.21.153</code> (NGUYENVANTIEN)\n"
+        f"💻 <b>Máy trạm đích:</b> <code>192.168.21.156</code> (NGUYENVANTIEN)\n"
         f"✅ <b>Trạng thái:</b> Lệnh đã chuyển giao tới Agent máy ảo để xử lý ngay lập tức!\n"
         f"⏱ <i>{_now_str()}</i>"
     )
@@ -880,7 +883,7 @@ async def handle_cve_report(req: Request):
     except:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    client_ip = body.get("client_ip", req.client.host if req.client else "192.168.21.153")
+    client_ip = body.get("client_ip", req.client.host if req.client else "192.168.21.156")
     hostname = body.get("hostname", "Windows-Host")
     apps = body.get("apps", [])
 
@@ -907,7 +910,7 @@ def trigger_cve_demo():
         {"name": "Google Chrome", "version": "128.0.6613.120", "publisher": "Google LLC"},
         {"name": "Notepad++ (64-bit x64)", "version": "8.6.9", "publisher": "Notepad++ Team"}
     ]
-    audit_res = audit_apps_for_cve(demo_apps, "192.168.21.153", "WIN-KETOAN")
+    audit_res = audit_apps_for_cve(demo_apps, "192.168.21.156", "WIN-KETOAN")
     return {
         "status": "ok",
         "msg": "Đã nạp dữ liệu kiểm thử CVE thành công!",
@@ -1627,7 +1630,7 @@ def dashboard_html():
       const timeEl = document.getElementById('bruteTime');
       const histBox = document.getElementById('bruteHistoryBox');
 
-      if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.153)';
+      if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.156)';
       if (user) user.innerText = bf.target_user || 'tien0';
       if (ip) ip.innerText = bf.attacker_ip || '192.168.21.105';
       if (count) count.innerText = (bf.fail_count || 0) + ' lần gõ sai';
@@ -1928,7 +1931,7 @@ def dashboard_html():
           <select id="assetFilter" onchange="handleAssetFilter(this.value)" class="bg-[#141b29] border border-[#232d40] rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none appearance-none pr-8">
             <option value="all">Tất cả máy (Ubuntu + Win10 + VPS)</option>
             <option value="ubuntu">Ubuntu SOC Host (192.168.21.136)</option>
-            <option value="win10">Windows Station (192.168.21.153)</option>
+            <option value="win10">Windows Station (192.168.21.156)</option>
             <option value="azure">Azure Cloud VPS (70.153.83.137)</option>
           </select>
           <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -2012,7 +2015,7 @@ def dashboard_html():
             <div id="bruteAlertBox" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
               <div class="flex justify-between items-center">
                 <span class="text-slate-400">Máy trạm mục tiêu:</span>
-                <span id="bruteHost" class="font-mono font-bold text-cyan-400">NGUYENVANTIEN (192.168.21.153)</span>
+                <span id="bruteHost" class="font-mono font-bold text-cyan-400">NGUYENVANTIEN (192.168.21.156)</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-slate-400">Tài khoản bị nhắm tới:</span>
@@ -2245,7 +2248,7 @@ def dashboard_html():
                 <span class="text-blue-400">💻</span>
                 <div>
                   <span class="font-bold text-slate-200 block">Win10-Agent-PC</span>
-                  <span class="text-[10px] text-slate-400">192.168.21.153 (Workstation)</span>
+                  <span class="text-[10px] text-slate-400">192.168.21.156 (Workstation)</span>
                 </div>
               </div>
               <div class="text-right">
@@ -2468,7 +2471,7 @@ def dashboard_html():
               <span class="text-2xl">🪟</span>
               <div>
                 <h3 class="font-bold text-white">Windows 10 Workstation</h3>
-                <span class="text-xs font-mono text-blue-400">192.168.21.153</span>
+                <span class="text-xs font-mono text-blue-400">192.168.21.156</span>
               </div>
             </div>
             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Monitored</span>
@@ -3331,7 +3334,7 @@ def dashboard_html():
       const timeEl = document.getElementById('bruteTime');
       const histBox = document.getElementById('bruteHistoryBox');
 
-      if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.153)';
+      if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.156)';
       if (user) user.innerText = bf.target_user || 'tien0';
       if (ip) ip.innerText = bf.attacker_ip || '192.168.21.105';
       if (count) count.innerText = (bf.fail_count || 0) + ' lần gõ sai';

@@ -25,9 +25,13 @@ $SOC_SERVER = "http://192.168.21.136:8888"
 $METRICS_URL = "$SOC_SERVER/api/windows_metrics"
 $CVE_URL = "$SOC_SERVER/api/cve/report"
 
+# Tu dong lay IP that cua may tram
+$myIp = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -like "192.168.21.*" -and $_.IPAddress -ne "192.168.21.1" } | Select-Object -First 1).IPAddress
+if (-not $myIp) { $myIp = "192.168.21.156" }
+
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host "[+] SME SOC - HE THONG GIAM SAT TOAN DIEN MAY TRAM WINDOWS" -ForegroundColor Cyan
-Write-Host "[+] May tram: $env:COMPUTERNAME | Quyen: ADMINISTRATOR (HIGH INTEGRITY)" -ForegroundColor Green
+Write-Host "[+] May tram: $env:COMPUTERNAME (IP: $myIp) | Quyen: ADMINISTRATOR" -ForegroundColor Green
 Write-Host "[+] Server SOC: $SOC_SERVER" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
@@ -72,7 +76,7 @@ Write-Host "`n[*] [1/3] Dang quet danh muc phan mem cai dat tren toan bo may tra
 $installed = Get-InstalledApps
 Write-Host "[*] [2/3] Tim thay $($installed.Count) ung dung he thong. Dang gui ve SOC Server..." -ForegroundColor Yellow
 $cvePayload = @{
-    client_ip = "192.168.21.153"
+    client_ip = $myIp
     hostname = $env:COMPUTERNAME
     scanned_at = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
     total_apps = $installed.Count
@@ -118,7 +122,6 @@ function Check-TargetFolders() {
 
                 if (-not $seenFiles.ContainsKey($fullPath)) {
                     $cveApp = $null
-                    # Bat bat ky file nao co ten winrar, putty, 7z ma khong can go dung phien ban
                     if ($fn -like "*winrar*") {
                         $cveApp = @{ name = "WinRAR (Tep tai ve: $($_.Name))"; version = "6.22.0"; publisher = "win.rar GmbH" }
                     } elseif ($fn -like "*putty*") {
@@ -136,7 +139,7 @@ function Check-TargetFolders() {
                         Write-Host "`n[!] [RADAR CVE PHAT HIEN] Tep nguy hiem tai: $fullPath" -ForegroundColor Red
                         Write-Host "    -> Ung dung: $($cveApp.name) (CVE HIGH/CRITICAL)" -ForegroundColor Red
                         $payload = @{
-                            client_ip = "192.168.21.153"
+                            client_ip = $myIp
                             hostname = $env:COMPUTERNAME
                             apps = @($cveApp)
                         }
@@ -148,7 +151,6 @@ function Check-TargetFolders() {
         }
     }
 
-    # Don dep bo nho seen: Neu file da bi xoa, xoa khoi seenFiles de phat hien tiep neu xuat hien lai
     $toRemove = @()
     foreach ($p in $seenFiles.Keys) {
         if (-not $currentPaths.ContainsKey($p)) {
@@ -165,10 +167,9 @@ Write-Host "`n[+] Agent dang chay: Canh chung toan bo Desktop/Downloads/Temp va 
 
 while ($true) {
     try {
-        # 0. Phong toa cuong che neu dang o che do Lockdown (khong cho phep bat ky ai mo Desktop)
+        # 0. Phong toa cuong che neu dang o che do Lockdown (khong cho phep mo Desktop)
         if ($global:isLockdownActive) {
             rundll32.exe user32.dll,LockWorkStation
-            tsdiscon 2>$null
         }
 
         # 1. Kiem tra file CVE trong tat ca thu muc trong yeu
@@ -249,7 +250,7 @@ while ($true) {
                 }
             }
 
-            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Phong toa User & Khoa PIN)
+            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Phong toa User)
             if ($resp.brute_action -and $resp.brute_action -ne "none") {
                 $bAct = $resp.brute_action
                 $bIp = $resp.brute_target_ip
@@ -277,21 +278,14 @@ while ($true) {
                         $usersToLock += $bUser
                     }
                     foreach ($u in $usersToLock) {
-                        net user "$u" /active:no
+                        net user "$u" /active:no >nul 2>&1
                         Disable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
                         Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN $u (Account active: No)!" -ForegroundColor Green
                     }
 
-                    # 3. Vo hieu hoa dang nhap bang ma PIN tren man hinh khoa (Windows Hello PIN Provider)
-                    # Giup chan hoan toan ke ngoi truoc man hinh go ma PIN
-                    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" -Name "Disabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-                    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" -Name "Disabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA MA PIN TREN MAN HINH KHOA!" -ForegroundColor Green
-
-                    # 4. Tong co nguoi dung ra ngoai man hinh khoa ngay lap tuc
+                    # 3. Khoa man hinh ngay lap tuc (GIU TIEN TRINH CHAY NGAM DE NHAN LENH MO KHOA)
                     rundll32.exe user32.dll,LockWorkStation
-                    tsdiscon 2>$null
-                    Write-Host "[+] [SOAR THUC THI] DA KICK RA NGOAI MAN HINH KHOA THANH CONG!" -ForegroundColor Green
+                    Write-Host "[+] [SOAR THUC THI] DA KHOA MAN HINH (LockWorkStation)!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unlock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh MO KHOA TAI KHOAN: $bUser" -ForegroundColor Green
@@ -305,15 +299,15 @@ while ($true) {
                         $usersToUnlock += $bUser
                     }
                     foreach ($u in $usersToUnlock) {
-                        net user "$u" /active:yes
+                        net user "$u" /active:yes >nul 2>&1
                         Enable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
                         Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $u THANH CONG (Account active: Yes)!" -ForegroundColor Green
                     }
-
-                    # 3. Khoi phuc phuong thuc dang nhap bang ma PIN
+                    
+                    # 3. Dam bao go bo moi thuoc tinh Disabled cua Credential Providers neu co
                     Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" -Name "Disabled" -ErrorAction SilentlyContinue
                     Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" -Name "Disabled" -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA KHOI PHUC DANG NHAP BANG MA PIN THANH CONG!" -ForegroundColor Green
+                    Write-Host "[+] [SOAR THUC THI] TAI KHOAN DA SAN SANG DE DANG NHAP!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unblock_ip" -and $bIp) {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh BO CHAN IP FIREWALL: $bIp" -ForegroundColor Green
@@ -326,6 +320,6 @@ while ($true) {
     } catch {
         # Bo qua loi ngoai le de giu chu trinh lien tuc
     }
-    $sleepSec = if ($global:isLockdownActive) { 0.5 } else { 3 }
+    $sleepSec = if ($global:isLockdownActive) { 1 } else { 3 }
     Start-Sleep -Seconds $sleepSec
 }
