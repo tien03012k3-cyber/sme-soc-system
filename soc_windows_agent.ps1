@@ -8,7 +8,11 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 if (-not $isAdmin) {
     Write-Host "[!] CANH BAO: Agent chua chay voi quyen Administrator!" -ForegroundColor Yellow
     Write-Host "[*] Dang tu dong chuyen sang quyen Administrator (UAC)..." -ForegroundColor Yellow
-    Start-Process powershell.exe -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    $localDir = "C:\Users\Public\SOC_Agent"
+    if (-not (Test-Path $localDir)) { New-Item -ItemType Directory -Path $localDir -Force | Out-Null }
+    $localTarget = Join-Path $localDir "soc_windows_agent.ps1"
+    Copy-Item -Path $PSCommandPath -Destination $localTarget -Force -ErrorAction SilentlyContinue
+    Start-Process powershell.exe -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$localTarget`"" -Verb RunAs
     exit
 }
 

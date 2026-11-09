@@ -2,46 +2,32 @@
 title SME SOC - KHOI DONG AGENT QUAN TRI (ADMIN)
 color 0a
 
-echo ======================================================================
-echo       SME SOC - KHOI DONG AGENT MAY TRAM VOI QUYEN ADMIN
-echo ======================================================================
-echo.
+:: 1. Copy sang o C: cuc bo ngay khi con o phien nguoi dung (de khong bi mat o Z khi len Admin)
+if not exist "C:\Users\Public\SOC_Agent" mkdir "C:\Users\Public\SOC_Agent" >nul 2>&1
+if exist "%~dp0soc_windows_agent.ps1" copy /y "%~dp0soc_windows_agent.ps1" "C:\Users\Public\SOC_Agent\soc_windows_agent.ps1" >nul 2>&1
+if exist "Z:\sharemay1\soc_windows_agent.ps1" copy /y "Z:\sharemay1\soc_windows_agent.ps1" "C:\Users\Public\SOC_Agent\soc_windows_agent.ps1" >nul 2>&1
+if exist "\\vmware-host\Shared Folders\sharemay1\soc_windows_agent.ps1" copy /y "\\vmware-host\Shared Folders\sharemay1\soc_windows_agent.ps1" "C:\Users\Public\SOC_Agent\soc_windows_agent.ps1" >nul 2>&1
+if exist "%~f0" copy /y "%~f0" "C:\Users\Public\SOC_Agent\CHAY_AGENT_SOC.bat" >nul 2>&1
 
-:: 1. Kiem tra quyen Administrator
+:: 2. Kiem tra quyen Administrator
 net session >nul 2>&1
 if %errorlevel% neq 0 (
+    echo ======================================================================
+    echo       SME SOC - KHOI DONG AGENT MAY TRAM VOI QUYEN ADMIN
+    echo ======================================================================
     echo [*] Dang yeu cau quyen Administrator (UAC)...
-    echo [*] Vui long bam YES (CO) tren man hinh de cap quyen cho Agent!
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs"
+    echo [*] Vui long bam YES (CO) tren hop thoai UAC de cap quyen cho Agent!
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k C:\Users\Public\SOC_Agent\CHAY_AGENT_SOC.bat' -Verb RunAs"
     exit /b
 )
 
-:: 2. Khi da co quyen Administrator
-echo [+] XAC NHAN: Dang chay voi quyen ADMINISTRATOR!
-
-:: Tao thu muc C:\SOC_Agent
-if not exist "C:\SOC_Agent" mkdir "C:\SOC_Agent"
-
-:: Tim va chep soc_windows_agent.ps1 vao C:\SOC_Agent
-set "AGENT_SRC="
-if exist "%~dp0soc_windows_agent.ps1" set "AGENT_SRC=%~dp0soc_windows_agent.ps1"
-if not defined AGENT_SRC if exist "Z:\sharemay1\soc_windows_agent.ps1" set "AGENT_SRC=Z:\sharemay1\soc_windows_agent.ps1"
-if not defined AGENT_SRC if exist "D:\sharemay1\soc_windows_agent.ps1" set "AGENT_SRC=D:\sharemay1\soc_windows_agent.ps1"
-if not defined AGENT_SRC if exist "\\vmware-host\Shared Folders\sharemay1\soc_windows_agent.ps1" set "AGENT_SRC=\\vmware-host\Shared Folders\sharemay1\soc_windows_agent.ps1"
-
-if defined AGENT_SRC (
-    echo [*] Dang chep Agent tu: %AGENT_SRC%
-    copy /y "%AGENT_SRC%" "C:\SOC_Agent\soc_windows_agent.ps1" >nul
-) else (
-    echo [!] Khong tim thay soc_windows_agent.ps1 o thu muc chia se, kiem tra C:\SOC_Agent...
-)
-
-if not exist "C:\SOC_Agent\soc_windows_agent.ps1" (
-    echo [ERROR] Khong tim thay file C:\SOC_Agent\soc_windows_agent.ps1!
-    echo Vui long dam bao trong thu muc chia se Z:\sharemay1 co file soc_windows_agent.ps1.
-    pause
-    exit /b
-)
+:: 3. Khi da co quyen Administrator tren o dia C:
+cd /d "C:\Users\Public\SOC_Agent"
+cls
+echo ======================================================================
+echo       SME SOC - AGENT DANG CHAY VOI QUYEN ADMINISTRATOR!
+echo ======================================================================
+echo.
 
 :: Bat che do Security Audit de Windows bat buoc phai ghi log Event 4625 khi go sai pass hoac PIN
 echo [*] Dang bat Security Audit cho Event ID 4625 (Logon Failure)...
@@ -50,10 +36,16 @@ auditpol /set /subcategory:"Credential Validation" /failure:enable /success:enab
 auditpol /set /subcategory:"Other Logon/Logoff Events" /failure:enable >nul 2>&1
 
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLinkedConnections" /t REG_DWORD /d 1 /f >nul 2>&1
-reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "SME_SOC_Agent" /f >nul 2>&1
-schtasks /delete /tn "SME_SOC_Agent" /f >nul 2>&1
 
-echo [+] Dang khoi chay PowerShell Agent...
-powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File "C:\SOC_Agent\soc_windows_agent.ps1"
+:: Kiem tra file Agent
+if not exist "C:\Users\Public\SOC_Agent\soc_windows_agent.ps1" (
+    echo [ERROR] Khong tim thay file soc_windows_agent.ps1!
+    echo Vui long dam bao thu muc chia se Z:\sharemay1 co file soc_windows_agent.ps1.
+    pause
+    exit /b
+)
+
+echo [+] Khoi chay PowerShell Agent giam sat thoi gian thuc...
+powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File "C:\Users\Public\SOC_Agent\soc_windows_agent.ps1"
 
 pause
