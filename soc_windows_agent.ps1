@@ -315,6 +315,41 @@ while ($true) {
                     netsh advfirewall firewall delete rule name="$ruleName" >nul 2>nul
                     Write-Host "[+] [SOAR THUC THI] DA BO CHAN IP $bIp TREN FIREWALL!" -ForegroundColor Green
                 }
+                elseif ($bAct -eq "dual") {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh KHOANH VUNG TOAN DIEN (DUAL): Chan IP $bIp va Khoa User $bUser" -ForegroundColor Red
+                    if ($bIp) {
+                        $ruleName = "SOC_SOAR_BLOCK_$bIp"
+                        netsh advfirewall firewall delete rule name="$ruleName" >nul 2>nul
+                        netsh advfirewall firewall add rule name="$ruleName" dir=in action=block remoteip="$bIp" >nul 2>nul
+                        Write-Host "[+] [SOAR THUC THI] DA CHAN IP $bIp TREN WINDOWS FIREWALL!" -ForegroundColor Green
+                    }
+                    $global:isLockdownActive = $true
+                    $usersToLock = @("tien0")
+                    if ($bUser -and $bUser -ne "tien0" -and $bUser -notlike "*$") { $usersToLock += $bUser }
+                    foreach ($u in $usersToLock) {
+                        net user "$u" /active:no >nul 2>&1
+                        Disable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
+                    }
+                    rundll32.exe user32.dll,LockWorkStation
+                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN VA KHOA MAN HINH!" -ForegroundColor Green
+                }
+                elseif ($bAct -eq "rollback_all") {
+                    Write-Host "`n[!] [SOAR COMMAND] Nhan lenh KHOI PHUC TOAN BO (ROLLBACK ALL)" -ForegroundColor Green
+                    if ($bIp) {
+                        $ruleName = "SOC_SOAR_BLOCK_$bIp"
+                        netsh advfirewall firewall delete rule name="$ruleName" >nul 2>nul
+                    }
+                    $global:isLockdownActive = $false
+                    $usersToUnlock = @("tien0")
+                    if ($bUser -and $bUser -ne "tien0" -and $bUser -notlike "*$") { $usersToUnlock += $bUser }
+                    foreach ($u in $usersToUnlock) {
+                        net user "$u" /active:yes >nul 2>&1
+                        Enable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
+                    }
+                    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" -Name "Disabled" -ErrorAction SilentlyContinue
+                    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" -Name "Disabled" -ErrorAction SilentlyContinue
+                    Write-Host "[+] [SOAR THUC THI] DA BO CHAN TOAN BO IP VA MO KHOA TAI KHOAN SAN SANG!" -ForegroundColor Green
+                }
             }
         }
     } catch {

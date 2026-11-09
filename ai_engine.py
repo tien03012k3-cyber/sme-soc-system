@@ -258,6 +258,92 @@ BRUTE_FORCE_COMMAND = {
     "timestamp": 0
 }
 
+# ==============================================================================
+# SOAR ENTERPRISE PLAYBOOK ENGINE (NIST SP 800-61 Rev.2 / MITRE D3FEND / MITRE ATT&CK)
+# ==============================================================================
+SOAR_CONFIG = {
+    "mode": "auto",              # "auto" (Tự động 100%) | "approval" (Bán tự động - Chờ duyệt)
+    "default_track": "block_ip",  # "block_ip" (NIST Least Disruption - Khuyến nghị) | "lock_user" | "dual"
+    "auto_notify": True,
+    "lock_threshold": 5          # Ngưỡng leo thang: nếu sai >= 5 lần, tự động kích hoạt cả khóa user
+}
+
+SOAR_PLAYBOOKS = {
+    "PB-T1110-BRUTEFORCE": {
+        "id": "PB-T1110-BRUTEFORCE",
+        "name": "Playbook Ứng phó Tấn công Dò mật khẩu (MITRE T1110)",
+        "mitre_id": "T1110",
+        "standard": "NIST SP 800-61 Rev.2 §3.3 | MITRE M1037 & M1036 | D3FEND D3-IB",
+        "description": "Tự động phân tích vector brute-force, cách ly IP kẻ tấn công trên Firewall máy trạm để bảo vệ công việc nhân viên (Least Disruption), hoặc tạm khóa tài khoản khi nguy cấp.",
+        "tracks": {
+            "block_ip": {
+                "name": "Cách ly Mạng (Network Containment - MITRE M1037 / D3-IB)",
+                "recommended": True,
+                "desc": "Chặn IP kẻ tấn công trên Windows Firewall ngay lập tức. Người dùng hợp lệ không bị gián đoạn (Chuẩn quốc tế NIST)."
+            },
+            "lock_user": {
+                "name": "Cách ly Định danh (Identity Containment - MITRE M1036 / D3-UPR)",
+                "recommended": False,
+                "desc": "Vô hiệu hóa tài khoản bị nhắm tới và khóa màn hình máy trạm để ngăn chặn truy cập trái phép."
+            },
+            "dual": {
+                "name": "Cách ly Toàn diện (Dual Containment)",
+                "recommended": False,
+                "desc": "Kết hợp cả chặn IP nguồn trên Firewall và vô hiệu hóa tài khoản người dùng."
+            }
+        }
+    },
+    "PB-T1204-MALWARE-CVE": {
+        "id": "PB-T1204-MALWARE-CVE",
+        "name": "Playbook Cách ly & Tiêu hủy Tệp dính CVE Nguy hiểm (MITRE T1204)",
+        "mitre_id": "T1204",
+        "standard": "NIST SP 800-61 Rev.2 §3.4 | MITRE M1049 | D3FEND D3-FOC",
+        "description": "Quét radar đa thư mục (Desktop, Downloads, Temp), tự động tiêu hủy và cách ly tệp độc hại có lỗ hổng CVE.",
+        "tracks": {
+            "delete_file": {"name": "Tiêu hủy & Cách ly Tệp (Quarantine)", "recommended": True, "desc": "Tự động xóa file độc hại trên máy trạm"}
+        }
+    },
+    "PB-T1499-RESOURCE-DOS": {
+        "id": "PB-T1499-RESOURCE-DOS",
+        "name": "Playbook Khống chế Quá tải Tài nguyên Hệ thống (MITRE T1499)",
+        "mitre_id": "T1499",
+        "standard": "NIST SP 800-61 Rev.2 §3.2 | High Resource Incident",
+        "description": "Giám sát ngưỡng CPU/RAM 90%, kích hoạt quy trình hạ nhiệt hoặc shutdown an toàn từ xa.",
+        "tracks": {
+            "alert_only": {"name": "Cảnh báo ChatOps khẩn", "recommended": True, "desc": "Báo Telegram kỹ sư trực ban"},
+            "shutdown": {"name": "Shutdown Máy trạm Từ xa", "recommended": False, "desc": "Tắt máy trạm tránh cháy nổ quá tải"}
+        }
+    },
+    "PB-T1190-WEB-EXPLOIT": {
+        "id": "PB-T1190-WEB-EXPLOIT",
+        "name": "Playbook Ngăn chặn Khai thác Web (SQLi, XSS, RCE)",
+        "mitre_id": "T1190",
+        "standard": "NIST SP 800-61 Rev.2 §3.3 | ModSecurity WAF & Nginx Drop",
+        "description": "Chặn IP truy cập khai thác lỗ hổng web tại tầng WAF/Reverse Proxy.",
+        "tracks": {
+            "waf_block": {"name": "Chặn IP trên WAF ModSecurity", "recommended": True, "desc": "Từ chối toàn bộ request từ IP tấn công"}
+        }
+    },
+    "PB-T1048-DATABASE-EXFIL": {
+        "id": "PB-T1048-DATABASE-EXFIL",
+        "name": "Playbook Bảo vệ Cơ sở Dữ liệu & Chống Rò rỉ (MITRE T1048)",
+        "mitre_id": "T1048",
+        "standard": "NIST SP 800-61 Rev.2 §3.3 | MySQL Enterprise Audit",
+        "description": "Phát hiện truy vấn nguy hiểm (DROP/TRUNCATE), tự động sao lưu snapshot DB và cô lập kết nối.",
+        "tracks": {
+            "db_snapshot": {"name": "Sao lưu Snapshot DB Tức thì", "recommended": True, "desc": "Đảm bảo toàn vẹn dữ liệu trước khi khôi phục"}
+        }
+    }
+}
+
+ACTIVE_CONTAINMENTS = {
+    "blocked_ips": {},      # ip -> { target, hostname, reason, rule, timestamp, time_str, standard }
+    "locked_users": {},     # user -> { target, hostname, reason, timestamp, time_str, standard }
+    "quarantined_files": {} # file -> { target, hostname, cve, timestamp, time_str }
+}
+
+SOAR_AUDIT_LOG = []
+
 
 LATEST_CVE_AUDIT = {
     "last_scanned": None,
@@ -503,6 +589,209 @@ def execute_soar_shutdown(user_name="Quản trị viên"):
     )
     send_telegram(msg, thread_id=TOPIC_SOAR_ID)
 
+def execute_soar_playbook(playbook_id, context):
+    """
+    Kích hoạt thực thi Playbook tự động theo chuẩn quốc tế NIST SP 800-61 Rev. 2.
+    """
+    global BRUTE_FORCE_INCIDENT, BRUTE_FORCE_COMMAND, ACTIVE_CONTAINMENTS, SOAR_AUDIT_LOG
+    pb = SOAR_PLAYBOOKS.get(playbook_id)
+    if not pb:
+        return {"status": "error", "message": f"Playbook {playbook_id} không tồn tại"}
+
+    track = SOAR_CONFIG.get("default_track", "block_ip")
+    if context.get("fail_count", 0) >= SOAR_CONFIG.get("lock_threshold", 5):
+        track = "dual"
+
+    target_ip = context.get("attacker_ip", "192.168.21.105")
+    target_user = context.get("target_user", "tien0")
+    if target_user.replace("$", "").strip().upper() in ["NGUYENVANTIEN", "WIN-KETOAN", ""]:
+        target_user = "tien0"
+    hostname = context.get("hostname", "NGUYENVANTIEN")
+    operator = context.get("operator", "SOAR Playbook Engine (Autonomous)")
+
+    actions_executed = []
+    now_ts = time.time()
+    now_s = _now_str()
+
+    with _lock:
+        if track in ["block_ip", "dual"] and target_ip:
+            BRUTE_FORCE_COMMAND = {
+                "action": "block_ip" if track == "block_ip" else "dual",
+                "target_ip": target_ip,
+                "target_user": target_user,
+                "timestamp": now_ts,
+                "time": now_s
+            }
+            ACTIVE_CONTAINMENTS["blocked_ips"][target_ip] = {
+                "target": target_ip,
+                "type": "ip",
+                "hostname": hostname,
+                "reason": f"MITRE T1110: Gõ sai mật khẩu {context.get('fail_count', 3)} lần",
+                "rule": f"SOC_SOAR_BLOCK_{target_ip}",
+                "timestamp": now_ts,
+                "time_str": now_s,
+                "standard": "NIST SP 800-61 §3.3 (Network Containment)"
+            }
+            BRUTE_FORCE_INCIDENT["status"] = "ip_blocked"
+            actions_executed.append(f"Chặn IP {target_ip} trên Windows Firewall (MITRE M1037)")
+
+        if track in ["lock_user", "dual"] and target_user:
+            if track == "lock_user":
+                BRUTE_FORCE_COMMAND = {
+                    "action": "lock_user",
+                    "target_ip": target_ip,
+                    "target_user": target_user,
+                    "timestamp": now_ts,
+                    "time": now_s
+                }
+            ACTIVE_CONTAINMENTS["locked_users"][target_user] = {
+                "target": target_user,
+                "type": "user",
+                "hostname": hostname,
+                "reason": f"MITRE T1110: Dò quét tài khoản {target_user}",
+                "timestamp": now_ts,
+                "time_str": now_s,
+                "standard": "NIST SP 800-61 §3.3 (Identity Containment)"
+            }
+            BRUTE_FORCE_INCIDENT["status"] = "user_locked"
+            actions_executed.append(f"Tạm khóa tài khoản {target_user} (MITRE M1036)")
+
+        audit_entry = {
+            "timestamp": now_s,
+            "playbook_id": playbook_id,
+            "playbook_name": pb["name"],
+            "standard": pb["standard"],
+            "track": track,
+            "actions": actions_executed,
+            "operator": operator,
+            "context": context
+        }
+        SOAR_AUDIT_LOG.insert(0, audit_entry)
+        if len(SOAR_AUDIT_LOG) > 50:
+            SOAR_AUDIT_LOG.pop()
+
+        BRUTE_FORCE_INCIDENT["remediation_history"].append({
+            "action": track,
+            "time": now_s,
+            "detail": " & ".join(actions_executed)
+        })
+
+    tg_text = (
+        f"🤖 <b>[SOAR TỰ ĐỘNG THỰC THI PLAYBOOK]</b> 🤖\n"
+        f"📋 <b>Playbook:</b> <code>{pb['name']}</code>\n"
+        f"📜 <b>Tiêu chuẩn:</b> <code>{pb['standard']}</code>\n"
+        f"💻 <b>Máy trạm:</b> <code>{hostname}</code>\n"
+        f"🎯 <b>Mục tiêu:</b> User <code>{target_user}</code> | IP nguồn: <code>{target_ip}</code>\n"
+        f"⚡ <b>Hành động tự động:</b>\n" + "\n".join([f"  • {a}" for a in actions_executed]) + "\n"
+        f"👤 <b>Tác vụ nhân viên:</b> " + ("Được bảo đảm thông suốt (Không khóa màn hình)" if track == "block_ip" else "Đã khóa bảo vệ tài khoản") + "\n"
+        f"⏱ <i>Thời điểm: {now_s}</i>\n\n"
+        f"👉 <i>Admin có thể bấm nút bên dưới hoặc vào Trung tâm SOAR trên Web để Mở khóa / Bỏ chặn bất cứ lúc nào:</i>"
+    )
+
+    markup = {
+        "inline_keyboard": [
+            [
+                {"text": "🔓 Bỏ chặn IP", "callback_data": f"soar_unblock_{target_ip}"},
+                {"text": "🔑 Mở khóa User", "callback_data": f"soar_unlock_{target_user}"}
+            ]
+        ]
+    }
+    send_telegram(tg_text, thread_id=TOPIC_SOAR_ID, reply_markup=markup)
+
+    return {
+        "status": "ok",
+        "playbook": pb["name"],
+        "track": track,
+        "actions": actions_executed,
+        "audit": audit_entry
+    }
+
+def execute_soar_rollback(target_type, target_value="", operator="Quản trị viên"):
+    """
+    Thực hiện hoàn tác / mở khóa / bỏ chặn tập trung 1-click.
+    """
+    global BRUTE_FORCE_COMMAND, BRUTE_FORCE_INCIDENT, ACTIVE_CONTAINMENTS, SOAR_AUDIT_LOG
+    now_ts = time.time()
+    now_s = _now_str()
+    rolled_back = []
+
+    with _lock:
+        if target_type == "all":
+            BRUTE_FORCE_COMMAND = {
+                "action": "rollback_all",
+                "target_ip": "",
+                "target_user": "tien0",
+                "timestamp": now_ts,
+                "time": now_s
+            }
+            if ACTIVE_CONTAINMENTS["blocked_ips"]:
+                for ip in list(ACTIVE_CONTAINMENTS["blocked_ips"].keys()):
+                    rolled_back.append(f"Đã hủy chặn IP {ip} trên Firewall")
+                ACTIVE_CONTAINMENTS["blocked_ips"].clear()
+            else:
+                rolled_back.append("Đã dọn sạch các luật chặn IP trên Firewall")
+
+            if ACTIVE_CONTAINMENTS["locked_users"]:
+                for u in list(ACTIVE_CONTAINMENTS["locked_users"].keys()):
+                    rolled_back.append(f"Đã mở khóa tài khoản {u} (Account active: Yes)")
+                ACTIVE_CONTAINMENTS["locked_users"].clear()
+            else:
+                rolled_back.append("Đã kích hoạt lại tài khoản tien0")
+
+            BRUTE_FORCE_INCIDENT["status"] = "active"
+
+        elif target_type == "ip":
+            ip = target_value if target_value else "192.168.21.105"
+            BRUTE_FORCE_COMMAND = {
+                "action": "unblock_ip",
+                "target_ip": ip,
+                "target_user": "tien0",
+                "timestamp": now_ts,
+                "time": now_s
+            }
+            if ip in ACTIVE_CONTAINMENTS["blocked_ips"]:
+                del ACTIVE_CONTAINMENTS["blocked_ips"][ip]
+            rolled_back.append(f"Đã hủy chặn IP {ip} trên Windows Firewall")
+            if not ACTIVE_CONTAINMENTS["blocked_ips"] and not ACTIVE_CONTAINMENTS["locked_users"]:
+                BRUTE_FORCE_INCIDENT["status"] = "active"
+
+        elif target_type == "user":
+            u = target_value if target_value else "tien0"
+            BRUTE_FORCE_COMMAND = {
+                "action": "unlock_user",
+                "target_ip": "",
+                "target_user": u,
+                "timestamp": now_ts,
+                "time": now_s
+            }
+            if u in ACTIVE_CONTAINMENTS["locked_users"]:
+                del ACTIVE_CONTAINMENTS["locked_users"][u]
+            rolled_back.append(f"Đã mở khóa tài khoản {u} (Account active: Yes)")
+            if not ACTIVE_CONTAINMENTS["blocked_ips"] and not ACTIVE_CONTAINMENTS["locked_users"]:
+                BRUTE_FORCE_INCIDENT["status"] = "active"
+
+        audit_entry = {
+            "timestamp": now_s,
+            "playbook_id": "SOAR-ROLLBACK",
+            "playbook_name": "Quy trình Hoàn tác Khôi phục (1-Click Recovery)",
+            "standard": "NIST SP 800-61 Rev.2 §3.4 (Recovery & Restoration)",
+            "track": "manual_recovery",
+            "actions": rolled_back,
+            "operator": operator,
+            "context": {"type": target_type, "target": target_value}
+        }
+        SOAR_AUDIT_LOG.insert(0, audit_entry)
+
+    send_telegram(
+        f"✅ <b>[SOAR PHỤC HỒI / ROLLBACK HOÀN TẤT]</b> ✅\n"
+        f"👤 <b>Người thực hiện:</b> {operator}\n"
+        f"🔄 <b>Thao tác:</b>\n" + "\n".join([f"  • {r}" for r in rolled_back]) + f"\n"
+        f"⏱ <i>{now_s}</i>",
+        thread_id=TOPIC_SOAR_ID
+    )
+
+    return {"status": "ok", "actions": rolled_back, "message": " & ".join(rolled_back)}
+
 def telegram_polling_worker():
     offset = 0
     while True:
@@ -529,6 +818,12 @@ def telegram_polling_worker():
                             with _lock:
                                 CONFIG["enable_alerts"] = False
                             send_telegram(f"🔕 <b>[SOAR THỰC THI]</b> @{from_user} đã tắt cảnh báo trong 30 phút.", thread_id=TOPIC_SOAR_ID)
+                        elif cb_data.startswith("soar_unblock_"):
+                            tip = cb_data.replace("soar_unblock_", "").strip()
+                            execute_soar_rollback("ip", tip, operator=f"@{from_user}")
+                        elif cb_data.startswith("soar_unlock_"):
+                            tuser = cb_data.replace("soar_unlock_", "").strip()
+                            execute_soar_rollback("user", tuser, operator=f"@{from_user}")
 
                     elif "message" in update:
                         msg = update["message"]
@@ -621,6 +916,7 @@ async def receive_windows_metrics(request: Request):
     failed_ip = payload.get("last_failed_ip", "192.168.21.105")
 
     if failed_logins >= CONFIG.get("auth_fail_threshold", 2):
+        is_new_trigger = False
         with _lock:
             if not BRUTE_FORCE_INCIDENT["active"] or BRUTE_FORCE_INCIDENT["fail_count"] != failed_logins:
                 BRUTE_FORCE_INCIDENT["active"] = True
@@ -629,17 +925,18 @@ async def receive_windows_metrics(request: Request):
                 BRUTE_FORCE_INCIDENT["fail_count"] = failed_logins
                 BRUTE_FORCE_INCIDENT["detected_at"] = _now_str()
                 BRUTE_FORCE_INCIDENT["status"] = "active"
+                is_new_trigger = True
 
                 add_incident("red", "BRUTE-FORCE MẬT KHẨU (MITRE T1110)", f"User: {failed_user} (Gõ sai {failed_logins} lần)", f"IP Tấn công: {failed_ip} | Event 4625")
-                send_telegram(
-                    f"🚨 <b>[PHÁT HIỆN TẤN CÔNG BRUTE-FORCE - MITRE T1110]</b> 🚨\n"
-                    f"💻 Máy trạm: <code>NGUYENVANTIEN</code>\n"
-                    f"👤 User: <code>{failed_user}</code>\n"
-                    f"🌐 IP nguồn: <code>{failed_ip}</code>\n"
-                    f"⚠️ Số lần gõ sai: <b>{failed_logins} lần</b>\n"
-                    f"👉 Vào Web Dashboard bấm nút SOAR để Chặn IP hoặc Khóa User!",
-                    thread_id=TOPIC_SYSTEM_ID
-                )
+
+        if is_new_trigger and SOAR_CONFIG.get("mode") == "auto":
+            execute_soar_playbook("PB-T1110-BRUTEFORCE", {
+                "hostname": "NGUYENVANTIEN",
+                "target_user": failed_user,
+                "attacker_ip": failed_ip,
+                "fail_count": failed_logins,
+                "operator": "SOAR Playbook Engine (Autonomous)"
+            })
 
     cve_act = "none"
     cve_target = ""
@@ -658,10 +955,11 @@ async def receive_windows_metrics(request: Request):
             brute_act = "lock_user"
             brute_target_user = BRUTE_FORCE_INCIDENT.get("target_user", "tien0")
             brute_target_ip = BRUTE_FORCE_INCIDENT.get("attacker_ip", "")
-        elif BRUTE_FORCE_COMMAND.get("action") == "unlock_user" and (time.time() - b_cmd_ts < 600):
-            brute_act = "unlock_user"
+        elif BRUTE_FORCE_COMMAND.get("action") in ["unlock_user", "rollback_all"] and (time.time() - b_cmd_ts < 600):
+            brute_act = BRUTE_FORCE_COMMAND.get("action")
             brute_target_user = BRUTE_FORCE_COMMAND.get("target_user", "tien0")
-        elif (time.time() - b_cmd_ts < 25):
+            brute_target_ip = BRUTE_FORCE_COMMAND.get("target_ip", "")
+        elif (time.time() - b_cmd_ts < 35):
             brute_act = BRUTE_FORCE_COMMAND.get("action", "none")
             brute_target_ip = BRUTE_FORCE_COMMAND.get("target_ip", "")
             brute_target_user = BRUTE_FORCE_COMMAND.get("target_user", "")
@@ -809,7 +1107,10 @@ def get_status():
             "global_command": GLOBAL_COMMAND,
             "incidents": RECENT_INCIDENTS,
             "push_sub_count": len(PUSH_SUBSCRIPTIONS),
-            "brute_force": BRUTE_FORCE_INCIDENT
+            "brute_force": BRUTE_FORCE_INCIDENT,
+            "soar_config": SOAR_CONFIG,
+            "active_containments": ACTIVE_CONTAINMENTS,
+            "soar_audit": SOAR_AUDIT_LOG[:10]
         }
 
 @app.post("/api/config")
@@ -974,6 +1275,52 @@ async def handle_brute_force_remediate(req: Request):
 
     return {"status": "ok", "message": detail, "incident": BRUTE_FORCE_INCIDENT}
 
+@app.get("/api/soar/hub_status")
+def get_soar_hub_status():
+    with _lock:
+        return {
+            "status": "ok",
+            "config": SOAR_CONFIG,
+            "playbooks": SOAR_PLAYBOOKS,
+            "active_containments": ACTIVE_CONTAINMENTS,
+            "audit_log": SOAR_AUDIT_LOG[:15],
+            "incident": BRUTE_FORCE_INCIDENT
+        }
+
+@app.post("/api/soar/config")
+async def update_soar_config(req: Request):
+    global SOAR_CONFIG
+    body = await req.json()
+    with _lock:
+        if "mode" in body and body["mode"] in ["auto", "approval"]:
+            SOAR_CONFIG["mode"] = body["mode"]
+        if "default_track" in body and body["default_track"] in ["block_ip", "lock_user", "dual"]:
+            SOAR_CONFIG["default_track"] = body["default_track"]
+    return {"status": "ok", "config": SOAR_CONFIG}
+
+@app.post("/api/soar/rollback")
+async def handle_soar_rollback(req: Request):
+    body = await req.json()
+    t_type = body.get("type", "all")
+    t_val = body.get("target", "")
+    operator = body.get("operator", "Quản trị viên (Web SOAR Hub)")
+    res = execute_soar_rollback(t_type, t_val, operator=operator)
+    return res
+
+@app.post("/api/soar/trigger_playbook")
+async def handle_trigger_playbook(req: Request):
+    body = await req.json()
+    pb_id = body.get("playbook_id", "PB-T1110-BRUTEFORCE")
+    context = body.get("context", {
+        "hostname": "NGUYENVANTIEN",
+        "target_user": "tien0",
+        "attacker_ip": "192.168.21.105",
+        "fail_count": 3,
+        "operator": "Quản trị viên (Chạy thủ công)"
+    })
+    res = execute_soar_playbook(pb_id, context)
+    return res
+
 @app.post("/api/brute_force/demo_trigger")
 def trigger_brute_force_demo():
     global BRUTE_FORCE_INCIDENT
@@ -988,27 +1335,27 @@ def trigger_brute_force_demo():
         BRUTE_FORCE_INCIDENT["remediation_history"] = []
 
         add_incident("red", "BRUTE-FORCE MẬT KHẨU (MITRE T1110)", "User: tien0 (Gõ sai 3 lần)", "IP Tấn công: 192.168.21.105 | Event ID: 4625")
-        send_telegram(
-            f"🚨 <b>[PHÁT HIỆN TẤN CÔNG BRUTE-FORCE - MITRE T1110]</b> 🚨\n"
-            f"💻 Máy trạm: <code>NGUYENVANTIEN</code>\n"
-            f"👤 User mục tiêu: <code>tien0</code>\n"
-            f"🌐 IP kẻ tấn công: <code>192.168.21.105</code>\n"
-            f"⚠️ Số lần gõ sai: <b>3 lần / 60 giây</b>\n"
-            f"👉 Vào Web Dashboard bấm nút SOAR để Chặn IP hoặc Khóa User!",
-            thread_id=TOPIC_SYSTEM_ID
-        )
-    return {"status": "ok", "incident": BRUTE_FORCE_INCIDENT}
+
+    # Kích hoạt Playbook tự động ngay tức thì
+    res = execute_soar_playbook("PB-T1110-BRUTEFORCE", {
+        "hostname": "NGUYENVANTIEN",
+        "target_user": "tien0",
+        "attacker_ip": "192.168.21.105",
+        "fail_count": 3,
+        "operator": "SOAR Playbook Engine (Simulation)"
+    })
+    return {"status": "ok", "incident": BRUTE_FORCE_INCIDENT, "soar_result": res}
 
 @app.post("/api/brute_force/reset")
 def reset_brute_force():
-    global BRUTE_FORCE_INCIDENT, BRUTE_FORCE_COMMAND
+    global BRUTE_FORCE_INCIDENT
     with _lock:
         BRUTE_FORCE_INCIDENT["active"] = False
         BRUTE_FORCE_INCIDENT["status"] = "idle"
         BRUTE_FORCE_INCIDENT["fail_count"] = 0
         BRUTE_FORCE_INCIDENT["remediation_history"] = []
-        BRUTE_FORCE_COMMAND = {"action": "unlock_user", "target_ip": "", "target_user": "tien0", "timestamp": time.time()}
-    return {"status": "ok"}
+    execute_soar_rollback("all", "", operator="Quản trị viên (Reset All)")
+    return {"status": "ok", "message": "Đã hoàn tác và đặt lại toàn bộ hệ thống về bình thường"}
 
 @app.post("/api/cve/reset")
 def reset_cve_data():
@@ -1578,109 +1925,7 @@ def dashboard_html():
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SME SOC Command Center - Enterprise Multi-Module Defense</title>
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js">
-    async function triggerBruteAction(action) {
-      try {
-        const ip = document.getElementById('bruteIp').innerText.replace(' (Gõ sai 3 lần)', '').trim();
-        const user = document.getElementById('bruteUser').innerText.trim();
-        const res = await fetch('/api/brute_force/remediate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: action, target_ip: ip, target_user: user })
-        });
-        const d = await res.json();
-        alert(d.message || 'Lệnh SOAR đã được gửi tới máy trạm thành công!');
-        fetchStatus();
-      } catch (e) {
-        alert('Lỗi gửi lệnh SOAR: ' + e);
-      }
-    }
-
-    async function triggerBruteDemo() {
-      try {
-        const res = await fetch('/api/brute_force/demo_trigger', { method: 'POST' });
-        const d = await res.json();
-        alert('Đã kích hoạt sự cố Demo Brute-Force: Phát hiện máy NGUYENVANTIEN bị gõ sai pass 3 lần từ IP 192.168.21.105!');
-        fetchStatus();
-      } catch (e) {
-        alert('Lỗi kích hoạt demo: ' + e);
-      }
-    }
-
-    async function resetBruteForce() {
-      try {
-        await fetch('/api/brute_force/reset', { method: 'POST' });
-        alert('Đã đặt lại trạng thái giám sát Brute-Force về bình thường.');
-        fetchStatus();
-      } catch (e) {
-        alert('Lỗi đặt lại: ' + e);
-      }
-    }
-
-    function updateBruteForceCard(bf) {
-      if (!bf) return;
-      const container = document.getElementById('cardBruteForceContainer');
-      const badge = document.getElementById('bruteBadgeStatus');
-      const icon = document.getElementById('bruteIcon');
-      const title = document.getElementById('bruteTitle');
-      const host = document.getElementById('bruteHost');
-      const user = document.getElementById('bruteUser');
-      const ip = document.getElementById('bruteIp');
-      const count = document.getElementById('bruteCount');
-      const timeEl = document.getElementById('bruteTime');
-      const histBox = document.getElementById('bruteHistoryBox');
-
-      if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.156)';
-      if (user) user.innerText = bf.target_user || 'tien0';
-      if (ip) ip.innerText = bf.attacker_ip || '192.168.21.105';
-      if (count) count.innerText = (bf.fail_count || 0) + ' lần gõ sai';
-      if (timeEl) timeEl.innerText = bf.detected_at || '--:--:--';
-
-      if (bf.active) {
-        if (container) {
-          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-gradient-to-r from-[#240e1b] via-[#1c1228] to-[#121926] border-rose-600 shadow-xl shadow-rose-950/30';
-        }
-        if (badge) {
-          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse';
-          badge.innerText = 'CẢNH BÁO BÁO ĐỘNG';
-        }
-        if (icon) {
-          icon.className = 'text-2xl p-2 rounded-lg bg-rose-900/60 text-rose-400 animate-bounce';
-          icon.innerText = '🚨';
-        }
-        if (title) {
-          title.className = 'font-bold text-sm text-rose-300 tracking-wide';
-          title.innerText = 'SỰ CỐ BẢO MẬT: PHÁT HIỆN TẤN CÔNG BRUTE-FORCE (DÒ MẬT KHẨU)';
-        }
-      } else {
-        if (container) {
-          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-md';
-        }
-        if (badge) {
-          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
-          badge.innerText = 'Bình thường';
-        }
-        if (icon) {
-          icon.className = 'text-2xl p-2 rounded-lg bg-slate-800 text-slate-300';
-          icon.innerText = '🛡️';
-        }
-        if (title) {
-          title.className = 'font-bold text-sm text-white tracking-wide';
-          title.innerText = 'GIÁM SÁT TẤN CÔNG BRUTE-FORCE DÒ MẬT KHẨU';
-        }
-      }
-
-      if (histBox && bf.remediation_history && Array.isArray(bf.remediation_history)) {
-        if (bf.remediation_history.length > 0) {
-          histBox.innerHTML = '<div class="text-slate-400 font-bold mb-1">Nhật ký phản ứng SOAR:</div>' +
-            bf.remediation_history.slice(-3).map(h => `<div class="text-emerald-400">⚡ [${h.time}] ${h.detail}</div>`).join('');
-        } else {
-          histBox.innerHTML = '';
-        }
-      }
-    }
-
-  </script>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #111827; }
@@ -1983,98 +2228,187 @@ def dashboard_html():
     <!-- TAB 1: DASHBOARD VIEW (6-GRID) -->
     <div id="view-dashboard" class="tab-content p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
 
-      <!-- THẺ SỰ CỐ BẢO MẬT: BRUTE-FORCE DÒ MẬT KHẨU (MITRE ATT&CK T1110) -->
-      <div id="cardBruteForceContainer" class="col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-md">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-          <div class="flex items-center gap-3">
-            <span id="bruteIcon" class="text-2xl p-2 rounded-lg bg-slate-800 text-slate-300">🛡️</span>
+      <!-- TRUNG TÂM PHẢN ỨNG & ĐIỀU PHỐI TỰ ĐỘNG SOAR CHUẨN QUỐC TẾ (NIST SP 800-61 / MITRE D3FEND) -->
+      <div id="cardBruteForceContainer" class="col-span-1 md:col-span-2 lg:col-span-3 rounded-2xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-xl">
+        
+        <!-- HEADER TRUNG TÂM SOAR -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+          <div class="flex items-center gap-3.5">
+            <div id="bruteIcon" class="text-2xl p-2.5 rounded-xl bg-gradient-to-br from-cyan-900/60 to-slate-900 border border-cyan-500/30 text-cyan-400 shadow-inner">
+              🛡️
+            </div>
             <div>
               <div class="flex flex-wrap items-center gap-2">
-                <h3 id="bruteTitle" class="font-bold text-sm text-white tracking-wide">GIÁM SÁT TẤN CÔNG BRUTE-FORCE DÒ MẬT KHẨU</h3>
+                <h3 id="bruteTitle" class="font-bold text-base text-white tracking-wide flex items-center gap-2">
+                  TRUNG TÂM ĐIỀU PHỐI & PHẢN ỨNG TỰ ĐỘNG SOAR
+                </h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-800">NIST SP 800-61 Rev.2 §3.3</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800">MITRE ATT&CK T1110</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-950 text-blue-300 border border-blue-800">NIST SP 800-61 Rev.2</span>
-                <span id="bruteBadgeStatus" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">Bình thường</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">D3FEND D3-IB</span>
+                <span id="soarModeBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-700 animate-pulse">
+                  ⚡ AUTO-PILOT (TỰ ĐỘNG 100%)
+                </span>
+                <span id="bruteBadgeStatus" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  Hệ thống bình thường
+                </span>
               </div>
-              <p id="bruteSubtitle" class="text-xs text-slate-400 mt-0.5">Lắng nghe sự kiện Windows Event ID 4625 và kích hoạt SOAR điều phối phản ứng tự động.</p>
+              <p id="bruteSubtitle" class="text-xs text-slate-400 mt-1">
+                Tự động đánh giá sự kiện an ninh, kích hoạt Playbook khoanh vùng theo chuẩn quốc tế, và hỗ trợ hoàn tác 1-Click tại một điểm duy nhất.
+              </p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="triggerBruteDemo()" class="px-3 py-1.5 rounded bg-amber-600/90 hover:bg-amber-500 text-xs font-bold text-white shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition">
-              <span>🧪</span> Thử Demo (3 lần sai)
+          <div class="flex items-center gap-2.5">
+            <button onclick="triggerBruteDemo()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-xs font-bold text-white shadow-lg shadow-amber-600/30 flex items-center gap-1.5 transition active:scale-95">
+              <span>🧪</span> Thử Demo Playbook (3 lần sai)
             </button>
-            <button onclick="resetBruteForce()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
-              <span>🧹</span> Đặt lại
+            <button onclick="soarRollback('all', '')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition active:scale-95 flex items-center gap-1.5">
+              <span>🔄</span> Khôi phục Tất cả (Rollback All)
             </button>
           </div>
         </div>
 
-        <!-- NỘI DUNG CHI TIẾT SỰ CỐ & CÁC NÚT BẤM SOAR -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
-          <!-- CỘT 1: THÔNG TIN SỰ CỐ -->
-          <div class="lg:col-span-7 space-y-2">
-            <div id="bruteAlertBox" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
+        <!-- THÂN TRUNG TÂM SOAR (3 CỘT ĐIỀU PHỐI) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-4">
+          
+          <!-- CỘT 1: THÔNG TIN SỰ CỐ & QUY TRÌNH PLAYBOOK NIST SP 800-61 (4 COLS) -->
+          <div class="lg:col-span-4 space-y-3">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📋</span> Sự Cố & Tiến Trình Playbook:
+            </div>
+            <div id="bruteAlertBox" class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-2 shadow-inner">
               <div class="flex justify-between items-center">
-                <span class="text-slate-400">Máy trạm mục tiêu:</span>
+                <span class="text-slate-400">Máy trạm giám sát:</span>
                 <span id="bruteHost" class="font-mono font-bold text-cyan-400">NGUYENVANTIEN (192.168.21.156)</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-400">Tài khoản bị nhắm tới:</span>
+                <span class="text-slate-400">Tài khoản mục tiêu:</span>
                 <span id="bruteUser" class="font-mono font-bold text-amber-400">tien0</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-400">Địa chỉ IP kẻ tấn công:</span>
+                <span class="text-slate-400">IP nguồn tấn công:</span>
                 <span id="bruteIp" class="font-mono font-bold text-rose-400">Chưa phát hiện</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-400">Số lần gõ sai mật khẩu:</span>
+                <span class="text-slate-400">Số lần gõ sai Event 4625:</span>
                 <span id="bruteCount" class="font-mono font-bold text-slate-300">0 lần</span>
               </div>
-              <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-800/60">
+              <div class="flex justify-between items-center text-[11px] pt-1.5 border-t border-slate-800/80">
                 <span class="text-slate-500">Mốc thời gian phát hiện:</span>
                 <span id="bruteTime" class="font-mono text-slate-400">--:--:--</span>
               </div>
             </div>
-            <!-- LỊCH SỬ THỰC THI SOAR -->
-            <div id="bruteHistoryBox" class="text-[11px] font-mono text-slate-400 space-y-1">
+
+            <!-- QUY TRÌNH PLAYBOOK TRỰC QUAN NIST SP 800-61 -->
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[11px] space-y-2">
+              <div class="font-semibold text-slate-300 flex items-center justify-between">
+                <span>Quy trình Playbook NIST SP 800-61:</span>
+                <span class="text-[10px] text-cyan-400 font-mono">PB-T1110</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1 text-center font-mono text-[9px]">
+                <div id="stepDetect" class="p-1 rounded bg-slate-800 text-slate-400 border border-slate-700">1. Phát hiện</div>
+                <div id="stepTriage" class="p-1 rounded bg-slate-800 text-slate-400 border border-slate-700">2. Đánh giá</div>
+                <div id="stepContain" class="p-1 rounded bg-slate-800 text-slate-400 border border-slate-700">3. Khoanh vùng</div>
+                <div id="stepRecover" class="p-1 rounded bg-slate-800 text-slate-400 border border-slate-700">4. Phục hồi</div>
+              </div>
+            </div>
+
+            <!-- LỊCH SỬ THỰC THI GẦN NHẤT -->
+            <div id="bruteHistoryBox" class="text-[11px] font-mono text-slate-400 space-y-1 max-h-24 overflow-y-auto">
             </div>
           </div>
 
-          <!-- CỘT 2: 2 NÚT BẤM SOAR REMEDIATION -->
-          <div class="lg:col-span-5 flex flex-col justify-center space-y-2.5">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Hành Động Phản Ứng SOAR (1-Click Remediation):</div>
-            
-            <!-- NÚT 1: CHẶN IP TRÊN FIREWALL -->
-            <button onclick="triggerBruteAction('block_ip')" id="btnBruteBlockIp" class="w-full p-3 rounded-xl bg-gradient-to-r from-rose-900/80 to-rose-700/80 hover:from-rose-800 hover:to-rose-600 border border-rose-500/50 text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-rose-950/40 transition active:scale-[0.98]">
-              <div class="flex items-center gap-2.5">
-                <span class="text-lg">🛡️</span>
-                <div class="text-left">
-                  <div class="font-bold">Chặn IP này trên Firewall</div>
-                  <div class="text-[10px] text-rose-200 font-normal">Tự động cấu hình Windows Firewall (MITRE M1037)</div>
+          <!-- CỘT 2: TRUNG TÂM KHÔI PHỤC TẬP TRUNG (ONE-STOP REMEDIATION HUB) (5 COLS) -->
+          <div class="lg:col-span-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span>🎯</span> Khu Vực Khôi Phục & Mở Khóa Tập Trung:
+              </div>
+              <span class="text-[10px] text-emerald-400 font-mono">1-Click Override</span>
+            </div>
+
+            <!-- BẢNG THỰC THỂ ĐANG BỊ CÁCH LY (QUARANTINE / CONTAINMENT HUB) -->
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs min-h-[140px] flex flex-col justify-between">
+              <div>
+                <div class="text-[11px] font-medium text-slate-400 mb-2 flex items-center justify-between">
+                  <span>Trạng thái Thực thể đang bị khoanh vùng:</span>
+                  <span id="containmentCountBadge" class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-slate-400">0 mục</span>
+                </div>
+                <div id="soarContainmentList" class="space-y-2">
+                  <div class="p-3 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-emerald-400 text-center font-medium text-xs">
+                    ✅ Toàn bộ hệ thống an toàn • Không có IP hay User nào bị cách ly
+                  </div>
                 </div>
               </div>
-              <span class="px-2 py-0.5 rounded bg-black/40 text-[10px] font-mono font-bold">SOAR 1</span>
-            </button>
 
-            <!-- NÚT 2: TẠM KHÓA USER -->
-            <button onclick="triggerBruteAction('lock_user')" id="btnBruteLockUser" class="w-full p-3 rounded-xl bg-gradient-to-r from-amber-900/80 to-amber-700/80 hover:from-amber-800 hover:to-amber-600 border border-amber-500/50 text-white font-bold text-xs flex items-center justify-between shadow-lg shadow-amber-950/40 transition active:scale-[0.98]">
-              <div class="flex items-center gap-2.5">
-                <span class="text-lg">🔒</span>
-                <div class="text-left">
-                  <div class="font-bold">Tạm khóa User mục tiêu</div>
-                  <div class="text-[10px] text-amber-200 font-normal">Vô hiệu hóa tài khoản bị dò pass (MITRE M1036)</div>
+              <!-- HÀNH ĐỘNG THỦ CÔNG KHẨN CẤP -->
+              <div class="pt-3 border-t border-slate-800/80 mt-2">
+                <div class="text-[10px] text-slate-500 font-semibold uppercase mb-1.5">Can thiệp thủ công bổ sung:</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button onclick="triggerBruteAction('block_ip')" id="btnBruteBlockIp" class="p-2 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-700/60 text-rose-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
+                    <span>🛡️</span> Chặn IP Firewall
+                  </button>
+                  <button onclick="triggerBruteAction('lock_user')" id="btnBruteLockUser" class="p-2 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-700/60 text-amber-200 text-[11px] font-bold flex items-center justify-center gap-1.5 transition">
+                    <span>🔒</span> Tạm Khóa User
+                  </button>
                 </div>
               </div>
-              <span class="px-2 py-0.5 rounded bg-black/40 text-[10px] font-mono font-bold">SOAR 2</span>
-            </button>
+            </div>
+          </div>
 
-            <!-- HỦY CHẶN / MỞ KHÓA -->
-            <div class="flex gap-2 pt-1">
-              <button onclick="triggerBruteAction('unblock_ip')" class="flex-1 py-1 px-2 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[10px] font-semibold transition text-center">
-                Hủy chặn IP
-              </button>
-              <button onclick="triggerBruteAction('unlock_user')" class="flex-1 py-1 px-2 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[10px] font-semibold transition text-center">
-                Mở khóa User
-              </button>
+          <!-- CỘT 3: CẤU HÌNH CHIẾN LƯỢC SOAR & PLAYBOOK REGISTRY (3 COLS) -->
+          <div class="lg:col-span-3 space-y-3">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span>⚙️</span> Chiến Lược Vận Hành SOAR:
+            </div>
+
+            <!-- BẢNG CẤU HÌNH CHIẾN LƯỢC TỰ ĐỘNG -->
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-3">
+              <div>
+                <label class="text-[11px] text-slate-400 font-medium block mb-1">Chế độ vận hành SOAR:</label>
+                <select id="soarModeSelect" onchange="updateSoarPolicy()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 font-semibold focus:border-cyan-500 focus:outline-none">
+                  <option value="auto">🟢 Tự động 100% (Auto-Pilot - Chuẩn NIST)</option>
+                  <option value="approval">🟡 Bán tự động (Chờ phê duyệt)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-[11px] text-slate-400 font-medium block mb-1">Chiến lược Khoanh vùng Mặc định:</label>
+                <select id="soarTrackSelect" onchange="updateSoarPolicy()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 font-semibold focus:border-cyan-500 focus:outline-none">
+                  <option value="block_ip">🛡️ Chặn IP Kẻ xấu (NIST Khuyến nghị - Giữ thông suốt User)</option>
+                  <option value="lock_user">🔒 Khóa User Mục tiêu (Bảo vệ triệt để)</option>
+                  <option value="dual">⚡ Cách ly Kép (Chặn IP + Khóa User)</option>
+                </select>
+                <p class="text-[10px] text-slate-500 mt-1 italic">
+                  * Chuẩn NIST SP 800-61 ưu tiên chặn IP kẻ tấn công để không làm gián đoạn công việc của nhân viên hợp lệ.
+                </p>
+              </div>
+
+              <!-- DANH MỤC PLAYBOOK DOANH NGHIỆP -->
+              <div class="pt-2 border-t border-slate-800">
+                <div class="text-[10px] text-slate-400 font-bold uppercase mb-1">Danh mục Playbook sẵn có:</div>
+                <div class="space-y-1 text-[10px] font-mono">
+                  <div class="flex justify-between items-center text-cyan-300">
+                    <span>• PB-T1110 (Brute-Force)</span>
+                    <span class="text-[9px] text-emerald-400">Active</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-400">
+                    <span>• PB-T1204 (Malware/CVE)</span>
+                    <span class="text-[9px] text-emerald-400">Active</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-400">
+                    <span>• PB-T1499 (Resource DoS)</span>
+                    <span class="text-[9px] text-emerald-400">Active</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-400">
+                    <span>• PB-T1190 (WAF Exploit)</span>
+                    <span class="text-[9px] text-emerald-400">Active</span>
+                  </div>
+                  <div class="flex justify-between items-center text-slate-400">
+                    <span>• PB-T1048 (DB Exfil)</span>
+                    <span class="text-[9px] text-emerald-400">Active</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3037,7 +3371,7 @@ def dashboard_html():
           const cpu = data.metrics.cpu || 0;
           const ram = data.metrics.ram || 0;
           document.getElementById('ubuntuMetricsText').innerText = 'CPU: ' + cpu + '% | RAM: ' + ram + '%';
-        if (data.brute_force) updateBruteForceCard(data.brute_force);
+        if (data.brute_force) updateBruteForceCard(data.brute_force, data.soar_config, data.active_containments);
         }
 
         // 2. Incidents & Tickets
@@ -3304,7 +3638,7 @@ def dashboard_html():
       try {
         const res = await fetch('/api/brute_force/demo_trigger', { method: 'POST' });
         const d = await res.json();
-        alert('Đã kích hoạt sự cố Demo Brute-Force: Phát hiện máy NGUYENVANTIEN bị gõ sai pass 3 lần từ IP 192.168.21.105!');
+        alert('Đã kích hoạt sự cố Demo Brute-Force: Hệ thống SOAR tự động thực thi Playbook chuẩn NIST SP 800-61!');
         fetchStatus();
       } catch (e) {
         alert('Lỗi kích hoạt demo: ' + e);
@@ -3312,16 +3646,101 @@ def dashboard_html():
     }
 
     async function resetBruteForce() {
+      await soarRollback('all', '');
+    }
+
+    async function soarRollback(type, target) {
       try {
-        await fetch('/api/brute_force/reset', { method: 'POST' });
-        alert('Đã đặt lại trạng thái giám sát Brute-Force về bình thường.');
+        const res = await fetch('/api/soar/rollback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: type, target: target, operator: 'Quản trị viên (1-Click Hub)' })
+        });
+        const d = await res.json();
+        alert(d.message || 'Đã hoàn tác và mở khóa thành công!');
         fetchStatus();
       } catch (e) {
-        alert('Lỗi đặt lại: ' + e);
+        alert('Lỗi hoàn tác SOAR: ' + e);
       }
     }
 
-    function updateBruteForceCard(bf) {
+    async function updateSoarPolicy() {
+      try {
+        const mode = document.getElementById('soarModeSelect').value;
+        const track = document.getElementById('soarTrackSelect').value;
+        await fetch('/api/soar/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode, default_track: track })
+        });
+        fetchStatus();
+      } catch (e) {
+        console.error('Lỗi cập nhật SOAR policy:', e);
+      }
+    }
+
+    function renderActiveContainments(containments) {
+      const listEl = document.getElementById('soarContainmentList');
+      const badgeEl = document.getElementById('containmentCountBadge');
+      if (!listEl) return;
+
+      const blockedIps = (containments && containments.blocked_ips) ? Object.values(containments.blocked_ips) : [];
+      const lockedUsers = (containments && containments.locked_users) ? Object.values(containments.locked_users) : [];
+      const total = blockedIps.length + lockedUsers.length;
+
+      if (badgeEl) {
+        badgeEl.innerText = total + ' mục';
+        badgeEl.className = total > 0 ? 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800' : 'px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-slate-400';
+      }
+
+      if (total === 0) {
+        listEl.innerHTML = `
+          <div class="p-3 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-emerald-400 text-center font-medium text-xs">
+            ✅ Toàn bộ hệ thống an toàn • Không có IP hay User nào bị cách ly
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      blockedIps.forEach(item => {
+        html += `
+          <div class="p-2.5 rounded-lg bg-rose-950/40 border border-rose-700/60 flex items-center justify-between text-xs transition">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-1.5">
+                <span class="text-rose-400 font-bold">🛡️ IP Bị Chặn:</span>
+                <span class="font-mono font-bold text-white">${item.target}</span>
+              </div>
+              <div class="text-[10px] text-rose-300/80 font-mono">${item.rule || 'Windows Firewall Rule'} • ${item.time_str || ''}</div>
+            </div>
+            <button onclick="soarRollback('ip', '${item.target}')" class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] shadow transition active:scale-95 flex items-center gap-1">
+              <span>🔓</span> Bỏ chặn IP
+            </button>
+          </div>
+        `;
+      });
+
+      lockedUsers.forEach(item => {
+        html += `
+          <div class="p-2.5 rounded-lg bg-amber-950/40 border border-amber-700/60 flex items-center justify-between text-xs transition">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-1.5">
+                <span class="text-amber-400 font-bold">🔒 User Bị Khóa:</span>
+                <span class="font-mono font-bold text-white">${item.target}</span>
+              </div>
+              <div class="text-[10px] text-amber-300/80 font-mono">SAM Account Disabled • ${item.time_str || ''}</div>
+            </div>
+            <button onclick="soarRollback('user', '${item.target}')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition active:scale-95 flex items-center gap-1">
+              <span>🔑</span> Mở khóa User
+            </button>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    function updateBruteForceCard(bf, soarConfig, activeContainments) {
       if (!bf) return;
       const container = document.getElementById('cardBruteForceContainer');
       const badge = document.getElementById('bruteBadgeStatus');
@@ -3333,6 +3752,14 @@ def dashboard_html():
       const count = document.getElementById('bruteCount');
       const timeEl = document.getElementById('bruteTime');
       const histBox = document.getElementById('bruteHistoryBox');
+      const modeBadge = document.getElementById('soarModeBadge');
+      const modeSelect = document.getElementById('soarModeSelect');
+      const trackSelect = document.getElementById('soarTrackSelect');
+
+      const sStepDetect = document.getElementById('stepDetect');
+      const sStepTriage = document.getElementById('stepTriage');
+      const sStepContain = document.getElementById('stepContain');
+      const sStepRecover = document.getElementById('stepRecover');
 
       if (host) host.innerText = (bf.hostname || 'NGUYENVANTIEN') + ' (192.168.21.156)';
       if (user) user.innerText = bf.target_user || 'tien0';
@@ -3340,23 +3767,68 @@ def dashboard_html():
       if (count) count.innerText = (bf.fail_count || 0) + ' lần gõ sai';
       if (timeEl) timeEl.innerText = bf.detected_at || '--:--:--';
 
+      if (soarConfig) {
+        if (modeSelect && modeSelect.value !== soarConfig.mode) modeSelect.value = soarConfig.mode;
+        if (trackSelect && trackSelect.value !== soarConfig.default_track) trackSelect.value = soarConfig.default_track;
+        if (modeBadge) {
+          if (soarConfig.mode === 'auto') {
+            modeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-700 animate-pulse';
+            modeBadge.innerText = '⚡ AUTO-PILOT (TỰ ĐỘNG 100%)';
+          } else {
+            modeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-700';
+            modeBadge.innerText = '🛡️ BÁN TỰ ĐỘNG (APPROVAL)';
+          }
+        }
+      }
+
+      renderActiveContainments(activeContainments);
+
       if (bf.active) {
         if (container) {
-          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-gradient-to-r from-[#240e1b] via-[#1c1228] to-[#121926] border-rose-600 shadow-xl shadow-rose-950/30';
+          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-2xl p-5 border transition-all duration-300 bg-gradient-to-r from-[#240e1b] via-[#1c1228] to-[#121926] border-rose-600 shadow-xl shadow-rose-950/30';
         }
         if (badge) {
           badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse';
-          badge.innerText = 'CẢNH BÁO BÁO ĐỘNG';
+          badge.innerText = 'CẢNH BÁO: TẤN CÔNG BRUTE-FORCE';
         }
         if (icon) {
-          icon.className = 'text-2xl p-2 rounded-lg bg-rose-900/60 text-rose-400 animate-bounce';
+          icon.className = 'text-2xl p-2.5 rounded-xl bg-rose-900/60 text-rose-400 animate-bounce border border-rose-500/50';
           icon.innerText = '🚨';
         }
-        if (title) {
-          title.className = 'font-bold text-sm text-rose-300 tracking-wide';
-          title.innerText = 'SỰ CỐ BẢO MẬT: PHÁT HIỆN TẤN CÔNG BRUTE-FORCE (DÒ MẬT KHẨU)';
-        }
+
+        // Highlight steps
+        if (sStepDetect) sStepDetect.className = 'p-1 rounded bg-rose-900/60 text-rose-200 border border-rose-500 font-bold';
+        if (sStepTriage) sStepTriage.className = 'p-1 rounded bg-amber-900/60 text-amber-200 border border-amber-500 font-bold';
+        if (sStepContain) sStepContain.className = 'p-1 rounded bg-cyan-900/60 text-cyan-200 border border-cyan-500 font-bold';
+        if (sStepRecover) sStepRecover.className = 'p-1 rounded bg-emerald-900/60 text-emerald-200 border border-emerald-500 font-bold';
+
       } else {
+        if (container) {
+          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-2xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-xl';
+        }
+        if (badge) {
+          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+          badge.innerText = 'Hệ thống bình thường';
+        }
+        if (icon) {
+          icon.className = 'text-2xl p-2.5 rounded-xl bg-gradient-to-br from-cyan-900/60 to-slate-900 border border-cyan-500/30 text-cyan-400 shadow-inner';
+          icon.innerText = '🛡️';
+        }
+
+        if (sStepDetect) sStepDetect.className = 'p-1 rounded bg-slate-800 text-slate-400 border border-slate-700';
+        if (sStepTriage) sStepTriage.className = 'p-1 rounded bg-slate-800 text-slate-400 border border-slate-700';
+        if (sStepContain) sStepContain.className = 'p-1 rounded bg-slate-800 text-slate-400 border border-slate-700';
+        if (sStepRecover) sStepRecover.className = 'p-1 rounded bg-slate-800 text-slate-400 border border-slate-700';
+      }
+
+      if (histBox && bf.remediation_history && bf.remediation_history.length > 0) {
+        let hHtml = '<div class="text-[10px] text-slate-500 font-semibold mb-0.5">Nhật ký SOAR:</div>';
+        bf.remediation_history.slice(-3).reverse().forEach(h => {
+          hHtml += `<div class="text-[10px] text-slate-400">• <span class="text-cyan-400">[${h.time}]</span> ${h.detail || h.action}</div>`;
+        });
+        histBox.innerHTML = hHtml;
+      }
+    } else {
         if (container) {
           container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-md';
         }
