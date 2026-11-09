@@ -3828,32 +3828,6 @@ def dashboard_html():
         });
         histBox.innerHTML = hHtml;
       }
-    } else {
-        if (container) {
-          container.className = 'col-span-1 md:col-span-2 lg:col-span-3 rounded-xl p-5 border transition-all duration-300 bg-[#121926] border-[#1e283b] shadow-md';
-        }
-        if (badge) {
-          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
-          badge.innerText = 'Bình thường';
-        }
-        if (icon) {
-          icon.className = 'text-2xl p-2 rounded-lg bg-slate-800 text-slate-300';
-          icon.innerText = '🛡️';
-        }
-        if (title) {
-          title.className = 'font-bold text-sm text-white tracking-wide';
-          title.innerText = 'GIÁM SÁT TẤN CÔNG BRUTE-FORCE DÒ MẬT KHẨU';
-        }
-      }
-
-      if (histBox && bf.remediation_history && Array.isArray(bf.remediation_history)) {
-        if (bf.remediation_history.length > 0) {
-          histBox.innerHTML = '<div class="text-slate-400 font-bold mb-1">Nhật ký phản ứng SOAR:</div>' +
-            bf.remediation_history.slice(-3).map(h => `<div class="text-emerald-400">⚡ [${h.time}] ${h.detail}</div>`).join('');
-        } else {
-          histBox.innerHTML = '';
-        }
-      }
     }
 
   </script>
