@@ -20,6 +20,11 @@ Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+# Bat che do kiem toan Security Audit de Windows bat buoc ghi log Event ID 4625 khi go sai pass/PIN
+auditpol /set /subcategory:"Logon" /failure:enable /success:enable >$null 2>&1
+auditpol /set /subcategory:"Credential Validation" /failure:enable /success:enable >$null 2>&1
+auditpol /set /subcategory:"Other Logon/Logoff Events" /failure:enable >$null 2>&1
+
 $global:isLockdownActive = $false
 $SOC_SERVER = "http://192.168.21.136:8888"
 $METRICS_URL = "$SOC_SERVER/api/windows_metrics"
@@ -186,8 +191,8 @@ while ($true) {
         $targetUser = "tien0"
         $sourceIp = "192.168.21.105"
         try {
-            $cutoff = (Get-Date).AddMinutes(-5)
-            $events = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625; StartTime=$cutoff} -MaxEvents 20 -ErrorAction SilentlyContinue
+            $cutoff = (Get-Date).AddMinutes(-10)
+            $events = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625} -MaxEvents 20 -ErrorAction SilentlyContinue | Where-Object { $_.TimeCreated -ge $cutoff }
             if ($events) {
                 $failedCount = $events.Count
                 $xml = [xml]$events[0].ToXml()
@@ -195,6 +200,7 @@ while ($true) {
                 $ip = ($xml.Event.EventData.Data | Where-Object { $_.Name -eq 'IpAddress' }).'#text'
                 if ($u -and $u -ne "-") { $targetUser = $u }
                 if ($ip -and $ip -ne "-" -and $ip -ne "127.0.0.1" -and $ip -ne "::1") { $sourceIp = $ip }
+                Write-Host "`n[!] [EVENT 4625] Phat hien $failedCount lan go sai mat khau/PIN (User: $targetUser | IP: $sourceIp)!" -ForegroundColor Red
             }
         } catch {}
 
@@ -206,6 +212,12 @@ while ($true) {
             last_failed_ip = $sourceIp
         }
         $resp = Send-SocJson $METRICS_URL $metricsPayload
+        
+        if ($resp) {
+            Write-Host -NoNewline "."
+        } else {
+            Write-Host "`n[!] Khong ket noi duoc den SOC Server ($METRICS_URL)!" -ForegroundColor Yellow
+        }
         
         if ($resp) {
             # SOAR 1: Lenh tat may tu xa

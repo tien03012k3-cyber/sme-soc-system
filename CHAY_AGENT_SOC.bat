@@ -31,6 +31,11 @@ taskkill /f /im powershell.exe >nul 2>&1
 taskkill /f /im wscript.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 
+:: Bat buoc Windows phai ghi log Event 4625 khi go sai pass hoac PIN
+auditpol /set /subcategory:"Logon" /failure:enable /success:enable >nul 2>&1
+auditpol /set /subcategory:"Credential Validation" /failure:enable /success:enable >nul 2>&1
+auditpol /set /subcategory:"Other Logon/Logoff Events" /failure:enable >nul 2>&1
+
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLinkedConnections" /t REG_DWORD /d 1 /f >nul 2>&1
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "SME_SOC_Agent" /f >nul 2>&1
 schtasks /delete /tn "SME_SOC_Agent" /f >nul 2>&1
