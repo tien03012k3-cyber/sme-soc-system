@@ -654,7 +654,11 @@ async def receive_windows_metrics(request: Request):
     brute_target_user = ""
     with _lock:
         b_cmd_ts = BRUTE_FORCE_COMMAND.get("timestamp", 0)
-        if (time.time() - b_cmd_ts < 20):
+        if BRUTE_FORCE_INCIDENT.get("status") == "user_locked":
+            brute_act = "lock_user"
+            brute_target_user = BRUTE_FORCE_INCIDENT.get("target_user", "tien0")
+            brute_target_ip = BRUTE_FORCE_INCIDENT.get("attacker_ip", "")
+        elif (time.time() - b_cmd_ts < 25):
             brute_act = BRUTE_FORCE_COMMAND.get("action", "none")
             brute_target_ip = BRUTE_FORCE_COMMAND.get("target_ip", "")
             brute_target_user = BRUTE_FORCE_COMMAND.get("target_user", "")
@@ -1000,7 +1004,7 @@ def reset_brute_force():
         BRUTE_FORCE_INCIDENT["status"] = "idle"
         BRUTE_FORCE_INCIDENT["fail_count"] = 0
         BRUTE_FORCE_INCIDENT["remediation_history"] = []
-        BRUTE_FORCE_COMMAND = {"action": "none", "target_ip": "", "target_user": "", "timestamp": 0}
+        BRUTE_FORCE_COMMAND = {"action": "unlock_user", "target_ip": "", "target_user": "tien0", "timestamp": time.time()}
     return {"status": "ok"}
 
 @app.post("/api/cve/reset")

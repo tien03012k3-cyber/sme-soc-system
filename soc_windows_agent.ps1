@@ -3,6 +3,15 @@
 # MULTI-FOLDER RADAR (DESKTOP + DOWNLOADS + DOCUMENTS + TEMP) + SOAR REMEDIATION
 # ==============================================================================
 
+# 0. Kiem tra va dam bao Agent luon chay voi quyen Administrator cao nhat
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host "[!] CANH BAO: Agent chua chay voi quyen Administrator!" -ForegroundColor Yellow
+    Write-Host "[*] Dang tu dong chuyen sang quyen Administrator (UAC)..." -ForegroundColor Yellow
+    Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
+
 # Dam bao chi duy nhat 1 tien trinh Agent hoat dong (diet cac tien trinh Agent cu neu co)
 $myPid = $PID
 Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object {
@@ -18,7 +27,8 @@ $CVE_URL = "$SOC_SERVER/api/cve/report"
 
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host "[+] SME SOC - HE THONG GIAM SAT TOAN DIEN MAY TRAM WINDOWS" -ForegroundColor Cyan
-Write-Host "[+] May tram: $env:COMPUTERNAME | Server SOC: $SOC_SERVER" -ForegroundColor Cyan
+Write-Host "[+] May tram: $env:COMPUTERNAME | Quyen: ADMINISTRATOR (HIGH INTEGRITY)" -ForegroundColor Green
+Write-Host "[+] Server SOC: $SOC_SERVER" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
 # 1. Ham gui HTTP Post khong qua Proxy
@@ -158,6 +168,7 @@ while ($true) {
         # 0. Phong toa cuong che neu dang o che do Lockdown (khong cho phep bat ky ai mo Desktop)
         if ($global:isLockdownActive) {
             rundll32.exe user32.dll,LockWorkStation
+            tsdiscon 2>$null
         }
 
         # 1. Kiem tra file CVE trong tat ca thu muc trong yeu
@@ -205,14 +216,12 @@ while ($true) {
             # SOAR 2: Lenh tieu huy tep doc hai / cach ly tu xa
             if ($resp.cve_action -eq "delete_file" -and $resp.target_file) {
                 $targetFile = $resp.target_file
-                # Trich xuat tu khoa chinh: vi du "winrar-x64-622" tu "winrar-x64-622.exe"
                 $baseName = [System.IO.Path]::GetFileNameWithoutExtension($targetFile).Trim()
                 $keyword = if ($baseName -match "(winrar|putty|7z|7-zip|git|npp|notepad)") { $Matches[1] } else { $baseName }
                 
                 Write-Host "`n[!] [SOAR COMMAND] Nhan lenh tieu huy tu xa: $targetFile (Tu khoa: $keyword)" -ForegroundColor Red
                 $deletedCount = 0
 
-                # Xoa trong tat ca cac thu muc canh chung (Desktop, Downloads, Temp...)
                 foreach ($folder in $watchFolders) {
                     if (Test-Path $folder) {
                         Get-ChildItem -Path $folder -File -ErrorAction SilentlyContinue | Where-Object {
@@ -229,7 +238,6 @@ while ($true) {
                     }
                 }
 
-                # Tim va tieu huy toan bo trong UserProfile neu van chua thay
                 if ($deletedCount -eq 0) {
                     Get-ChildItem -Path $env:USERPROFILE -Filter "*$baseName*" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
                         $delP = $_.FullName
@@ -241,7 +249,7 @@ while ($true) {
                 }
             }
 
-            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Phong toa User)
+            # SOAR 3: Lenh phan ung Brute-Force (Chan IP Firewall / Phong toa User & Khoa PIN)
             if ($resp.brute_action -and $resp.brute_action -ne "none") {
                 $bAct = $resp.brute_action
                 $bIp = $resp.brute_target_ip
@@ -260,16 +268,30 @@ while ($true) {
                 elseif ($bAct -eq "lock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh PHONG TOA & TAM KHOA TAI KHOAN: $bUser (MITRE M1036)" -ForegroundColor Red
                     
-                    # 1. Kich hoat che do phong toa man hinh (da vang lien tuc ra ngoai)
+                    # 1. Kich hoat che do phong toa man hinh lien tuc (Lockdown Mode)
                     $global:isLockdownActive = $true
 
-                    # 2. Vo hieu hoa tai khoan bang quyen Admin
-                    net user "$bUser" /active:no >nul 2>nul
-                    Disable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN $bUser (Account active: No)!" -ForegroundColor Green
-                    
-                    # 3. Tong co nguoi dung ra ngoai man hinh dang nhap ngay lap tuc
+                    # 2. Vo hieu hoa tai khoan bang quyen Admin tren ca SAM va LocalUser
+                    $usersToLock = @("tien0")
+                    if ($bUser -and $bUser -ne "tien0" -and $bUser -notlike "*$") {
+                        $usersToLock += $bUser
+                    }
+                    foreach ($u in $usersToLock) {
+                        net user "$u" /active:no
+                        Disable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
+                        Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA TAI KHOAN $u (Account active: No)!" -ForegroundColor Green
+                    }
+
+                    # 3. Vo hieu hoa dang nhap bang ma PIN tren man hinh khoa (Windows Hello PIN Provider)
+                    # Giup chan hoan toan ke ngoi truoc man hinh go ma PIN
+                    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" -Name "Disabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" -Name "Disabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                    Write-Host "[+] [SOAR THUC THI] DA VO HIEU HOA MA PIN TREN MAN HINH KHOA!" -ForegroundColor Green
+
+                    # 4. Tong co nguoi dung ra ngoai man hinh khoa ngay lap tuc
                     rundll32.exe user32.dll,LockWorkStation
+                    tsdiscon 2>$null
+                    Write-Host "[+] [SOAR THUC THI] DA KICK RA NGOAI MAN HINH KHOA THANH CONG!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unlock_user") {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh MO KHOA TAI KHOAN: $bUser" -ForegroundColor Green
@@ -277,10 +299,21 @@ while ($true) {
                     # 1. Tat che do phong toa man hinh
                     $global:isLockdownActive = $false
 
-                    # 2. Kich hoat lai tai khoan
-                    net user "$bUser" /active:yes >nul 2>nul
-                    Enable-LocalUser -Name "$bUser" -ErrorAction SilentlyContinue
-                    Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $bUser THANH CONG (Account active: Yes)!" -ForegroundColor Green
+                    # 2. Kich hoat lai tai khoan tren SAM va LocalUser
+                    $usersToUnlock = @("tien0")
+                    if ($bUser -and $bUser -ne "tien0" -and $bUser -notlike "*$") {
+                        $usersToUnlock += $bUser
+                    }
+                    foreach ($u in $usersToUnlock) {
+                        net user "$u" /active:yes
+                        Enable-LocalUser -Name "$u" -ErrorAction SilentlyContinue
+                        Write-Host "[+] [SOAR THUC THI] DA MO KHOA TAI KHOAN $u THANH CONG (Account active: Yes)!" -ForegroundColor Green
+                    }
+
+                    # 3. Khoi phuc phuong thuc dang nhap bang ma PIN
+                    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" -Name "Disabled" -ErrorAction SilentlyContinue
+                    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" -Name "Disabled" -ErrorAction SilentlyContinue
+                    Write-Host "[+] [SOAR THUC THI] DA KHOI PHUC DANG NHAP BANG MA PIN THANH CONG!" -ForegroundColor Green
                 }
                 elseif ($bAct -eq "unblock_ip" -and $bIp) {
                     Write-Host "`n[!] [SOAR COMMAND] Nhan lenh BO CHAN IP FIREWALL: $bIp" -ForegroundColor Green
@@ -293,6 +326,6 @@ while ($true) {
     } catch {
         # Bo qua loi ngoai le de giu chu trinh lien tuc
     }
-    $sleepSec = if ($global:isLockdownActive) { 1 } else { 3 }
+    $sleepSec = if ($global:isLockdownActive) { 0.5 } else { 3 }
     Start-Sleep -Seconds $sleepSec
 }
